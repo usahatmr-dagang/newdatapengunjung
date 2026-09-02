@@ -1,110 +1,91 @@
-# 🐅 TMR Scraper & Dashboard - Panduan Lengkap Sistem
+# 🐅 TMR Scraper & Dashboard - Panduan Lengkap Sistem (V2 - GitHub Actions)
 
-Dokumen ini merupakan panduan komprehensif yang berisi seluruh arsitektur, logika, struktur database, dan cara kerja dari sistem **TMR Scraper Data Pendapatan & Pengunjung**. 
+Dokumen ini merupakan panduan komprehensif yang berisi seluruh arsitektur, logika jadwal, struktur database, dan cara kerja dari sistem **TMR Scraper Data Pendapatan & Pengunjung** versi terbaru yang kini berjalan tanpa biaya server (Serverless) menggunakan GitHub Actions.
 
 ---
 
 ## 1. 🏗️ Arsitektur Sistem Secara Keseluruhan
 
-Sistem ini terbagi menjadi dua bagian utama yang saling berkomunikasi melalui database cloud:
+Sistem ini terbagi menjadi 4 komponen utama yang saling bekerja sama:
 
-1. **Backend / Bot Scraper (Python):** Bertugas mengumpulkan data mentah dari website internal TMR secara otomatis, menghitung rekapitulasi, dan menyimpannya.
-2. **Frontend / Dashboard (React/Vite):** Bertugas mengambil data yang sudah matang tersebut dan menampilkannya secara *real-time* ke dalam visualisasi antarmuka (UI) yang cantik dan responsif.
-3. **Database (Firebase Firestore):** Jembatan penghubung (penyimpanan cloud) tempat robot meletakkan data dan tempat website membaca data.
-
----
-
-## 2. 🤖 Backend / Bot (Google Cloud VM)
-
-Bagian ini adalah otak utama yang menarik data. Semuanya diatur dalam file `tarik_data.py`.
-
-### Lokasi Penyimpanan Script `tarik_data.py`
-- **Lokal (PC Developer):** `c:\Users\user\.gemini\antigravity-ide\scratch\data-pendapatan-pengunjung\tarik_data.py`
-- **Server (Google Cloud VM):** `/home/alfatahsamadi/tmr-scraper/tarik_data.py`
-
-### Alur Kerja (Workflow)
-1. **Pemicu (Cronjob):** Server Ubuntu di Google Cloud VM memiliki fitur *Cronjob* yang disetting untuk mengeksekusi `tarik_data.py` secara otomatis setiap 15 menit.
-2. **Scraping Selenium:** Robot membuka Google Chrome mode *headless* (tanpa layar) lalu masuk ke:
-   - **Web 3A:** Untuk menarik data dari Merchant Page, TVM, New Gate, dan Mpos.
-   - **Web IWM:** Untuk menarik data dari Old Gate.
-3. **Penyimpanan Lokal (JSON):** Data hasil tarikan disimpan sementara ke dalam folder `/data/YYYY-MM-DD.json` (misal: `data/2026-06-18.json`).
-4. **Unggah ke Cloud:** Data tersebut kemudian diunggah (*push*) ke Firebase Firestore.
-
-### Logika & Fitur Khusus di `tarik_data.py`
-- **Pembagian Shift:** Robot otomatis mendeteksi waktu. Sebelum pukul 16:45 (Weekday) atau 17:30 (Weekend), data dicatat sebagai "Shift Siang". Lewat dari itu masuk "Shift Malam" (Kumulatif - Siang = Malam).
-- **Logika Agregasi Kategori:** Semua kata kunci tiket dari web 3A (seperti "DEWASA", "ANAK", "MOBIL", "MOTOR", "BUS KECIL", "PRIMATA", dll) dipetakan ke dalam 21 kode unik (ID 1-21) yang sesuai dengan standar akuntansi tiket TMR.
-- **Logika Fallback IWM (Cerdas Penahan Data):** Ini adalah logika pengaman. Jika server IWM *down* atau *timeout* dan mengembalikan data kosong, robot **TIDAK AKAN** menimpa data IWM dengan angka "0". Ia akan membaca kembali file JSON lokal terakhir (`data/YYYY-MM-DD.json`), mengambil angka IWM terakhir yang berhasil didapat, dan menggabungkannya dengan data 3A yang paling baru. Hal ini mencegah grafik *dashboard* terjun ke angka nol.
+1. **Pemicu Alarm (cron-job.org):** Layanan pihak ketiga gratis yang menekan tombol *trigger* API GitHub secara persis setiap 15 menit.
+2. **Mesin Cloud (GitHub Actions):** Server komputasi gratis yang menjalankan script Python (`tarik_data.py`) setiap kali dipicu. Server ini yang akan membuka Google Chrome rahasia dan menarik data.
+3. **Penyimpanan (Firebase Firestore & GitHub Repo):** 
+   - Firebase Firestore: Menyimpan data yang sudah matang untuk dikonsumsi Web App.
+   - GitHub Repo (Folder `data/`): Menyimpan cadangan data *real-time* berbentuk file `.json`.
+4. **Frontend Dashboard (React):** Web App yang menarik data dari Firestore dan menampilkannya menjadi grafik visual.
 
 ---
 
-## 3. 🌐 Frontend / Dashboard Web (React)
+## 2. 🤖 Backend / Bot Scraper (tarik_data.py)
 
-Aplikasi web yang dilihat oleh pengguna akhir. Dibangun menggunakan React, TypeScript, dan Vite. Di-hosting secara gratis menggunakan **Firebase Hosting** di URL `https://tmr-scraper-db.web.app`.
+Script ini adalah otak utama yang menarik data dari website 3A dan IWM.
 
-### Struktur File Utama
-- `src/App.tsx`: File kerangka utama yang mengatur navigasi antar halaman (Tab Dashboard, Tab Riwayat, dan Tab Status).
-- `src/components/DashboardPengunjung.tsx`: Halaman utama berisi kartu-kartu statistik.
-- `src/components/HourlyHistory.tsx`: Tabel riwayat data per 15 menit.
-- `src/components/ScraperStatus.tsx`: Monitor kesehatan robot.
+### Logika Sesi Operasional (Jam Kerja Bot)
+Bot ini dibuat pintar agar tidak mengonsumsi kuota komputasi GitHub saat TMR sedang tutup. Jika alarm berbunyi di luar jam operasional, bot akan langsung mati secara otomatis (*Auto-Stop*).
 
-### Logika Tampilan (UI) Dashboard
-1. **Pengelompokan (Clustering) Metode Pembayaran:**
-   - **Kanal Mandiri:** Merchant Page (3A), TVM (3A), dan Mpos (3A) ditampilkan dalam satu baris dengan *progress bar* persentase individual.
-   - **Kanal Jakcard (Gabungan):** New Gate (3A) dan Old Gate (IWM) **digabungkan** ke dalam satu kotak (Cluster) besar karena keduanya menggunakan metode pembayaran Jakcard.
-   - Persentase kontribusi terhadap total tiket dihitung secara gabungan untuk seluruh Jakcard, namun rincian jumlah pengunjung dan kendaraan (Dewasa, Anak, Motor, Mobil) tetap dirincikan per masing-masing pintu (New Gate vs Old Gate).
+Berikut aturan jam operasionalnya:
+- **Senin - Jumat (Weekday):**
+  - Siang: Pukul 07:00 - 16:30 WIB
+  - Malam: Pukul 17:00 - 22:15 WIB
+- **Sabtu:**
+  - Siang: Pukul 06:30 - 17:30 WIB
+  - Malam: Pukul 17:45 - 22:00 WIB
+- **Minggu:**
+  - Siang: Pukul 06:30 - 17:30 WIB
+  - Malam: *Tidak ada* (Libur).
 
-### Pencabutan Tombol "Scraper Manual"
-Pada versi terbaru ini, tombol pemicu *scraping* manual dari halaman web (Tab Scraper Otomatis) telah dinonaktifkan sepenuhnya. Hal ini karena logika agregasi yang kompleks (terutama fitur Fallback IWM) kini hanya berpusat pada `tarik_data.py` di VM. Memaksa *scraping* dari web akan menimpa dan merusak format database. Kini halaman tersebut murni berfungsi sebagai monitor *read-only*.
-
----
-
-## 4. 🗄️ Database (Firebase Firestore)
-
-Firestore menggunakan sistem *NoSQL Document*. Seluruh data dilempar ke *Collection* bernama `daily_records`.
-
-### Struktur Dokumen Firestore
-Setiap *document* diberi nama (ID) berdasarkan *timestamp* (contoh: `2026-06-18 15:00:00`). Di dalamnya berisi field:
-- `date`: Timestamp standar.
-- `total_pengunjung`, `anak`, `dewasa`: Total keseluruhan.
-- `motor`, `mobil`, `bus`, `sepeda`: Total kendaraan.
-- `pps`, `tsa`: Wahana primata dan anak.
-- `rekap` (Array/Object): Rincian jumlah *qty* dan *nominal* per kategori ID (1-21) dari gabungan 3A.
-- `tickets_3a_by_channel_visit`: Object yang menyimpan detail transaksi per masing-masing kanal penjualan di 3A (TVM, Mpos, Merchant, dll).
-- `iwm`: Array yang berisi detail transaksi IWM (Old Gate) lengkap beserta breakdown kendaraan dan orangnya.
+### Logika Ekstraksi Data
+- **Pembagian Shift:** Data direkap sebagai "siang" atau "malam" secara otomatis berdasarkan jam server saat bot berjalan.
+- **IWM Fallback:** Jika website IWM (Old Gate) sedang lambat/down sehingga tidak bisa ditarik, bot **TIDAK AKAN** mengubah nilainya menjadi 0. Bot akan mengambil riwayat angka terakhir dari file JSON lokal untuk menyelamatkan tampilan Dashboard.
 
 ---
 
-## 5. 🛠️ Prosedur Update & Deployment
+## 3. ⚙️ Otomatisasi (GitHub Actions & Cron-job)
 
-Setiap ada perubahan kode yang dilakukan di komputer lokal, perubahannya harus didorong (*deploy*) ke *Production* dengan cara berikut:
+### File Workflow (`.github/workflows/scraper.yml`)
+File ini adalah konfigurasi agar GitHub tahu apa yang harus dilakukan. Langkah-langkahnya:
+1. *Checkout* kode dari repository.
+2. *Setup* Python versi 3.10.
+3. Install semua *library* (seperti Selenium, Firebase-admin) dari `requirements.txt`.
+4. Memasukkan Kunci Rahasia Firebase dari pengaturan rahasia repositori (Secrets).
+5. Menjalankan `tarik_data.py`.
+6. Melakukan *Commit* dan *Push* file `.json` yang baru ditarik agar tersimpan di repositori GitHub cabang `main`.
 
-### Jika Mengubah Kode Web (React/UI/Frontend)
-Jalankan perintah ini di terminal VSCode/lokal:
-```bash
-npm run build
-npx firebase-tools deploy --only hosting
-```
-
-### Jika Mengubah Kode Robot (Python/Backend)
-1. Salin isi `tarik_data.py` terbaru.
-2. Masuk ke terminal Google Cloud VM (SSH).
-3. Timpa file lama dengan perintah:
-   ```bash
-   cp tarik_data.py tmr-scraper/tarik_data.py
-   ```
-*(Robot akan otomatis berjalan menggunakan kode terbaru pada menit ke-15 berikutnya, tidak perlu direstart).*
+### Pemicu Alarm Eksternal (cron-job.org)
+Karena jadwal internal bawaan GitHub sering kali tertunda, kita menggunakan cron-job.org:
+- **Metode:** POST API Request
+- **URL:** `https://api.github.com/repos/usahatmr-dagang/newdatapengunjung/actions/workflows/scraper.yml/dispatches`
+- **Jadwal:** Menit ke 0, 15, 30, dan 45.
+- **Otentikasi:** Menggunakan Personal Access Token GitHub (`ghp_...`).
 
 ---
 
-## 6. 🧹 Perawatan (Maintenance) Server VM
+## 4. 🗄️ Database (Firebase Firestore & JSON)
 
-Karena robot membuka *browser* Google Chrome tanpa henti, server Ubuntu lama-kelamaan akan kepenuhan *Cache* dan *Temp Files*. 
+### JSON Lokal (Di Github)
+File cadangan ada di `data/YYYY-MM-DD.json`. File ini sangat berguna bagi bot untuk membandingkan data 15 menit lalu dengan data yang baru ditarik. 
 
-**Skrip Auto Cleanup:**
-Di dalam server terdapat file `auto_cleanup.sh` yang mengecek batas kapasitas penyimpanan. Jika penyimpanan menyentuh **80%**, ia otomatis akan menghapus sampah *cache*. Jika penyimpanan masih di bawah 80% (misal 70%), ia tidak akan menghapus apa pun.
+### Firebase Firestore (Untuk Web App)
+Menggunakan koleksi bernama `daily_records`. Dokumen dinamai berdasarkan tanggal (`2026-06-18`). Setiap dokumen berisi `rekap` tiket, detail pengunjung, shift `siang` dan `malam`.
 
-**Perintah Sapu Bersih Manual (Force Clean):**
-Jika ingin memaksa VM membersihkan penyimpanannya tanpa menunggu 80%, *copy-paste* perintah ini di terminal SSH:
-```bash
-sudo rm -rf ~/.cache/google-chrome/Default/Cache/* && sudo find /tmp -name ".com.google.Chrome.*" -type d -exec rm -rf {} + && sudo apt-get autoremove -y && sudo apt-get clean && sudo journalctl --vacuum-size=100M
-```
+---
+
+## 5. 🛠️ Prosedur Perawatan & Update (Maintenance)
+
+Berkat arsitektur serverless di GitHub Actions, **Anda tidak perlu membersihkan cache Google Chrome sama sekali**. Setiap kali bot berjalan, GitHub memberikan mesin (VM) Ubuntu yang benar-benar baru dan kosong, lalu menghancurkannya lagi setelah selesai. Ini membuat sistem 100% bebas dari masalah memori penuh!
+
+### Cara Mengubah Jadwal Jam Operasional:
+1. Buka file `tarik_data.py`.
+2. Cari bagian `elif 17.0 <= time_val <= 22.25:` (ada di sekitar baris 460+).
+3. Anda bisa mengubah angka jam dengan format desimal (contoh: jam 16:30 ditulis `16.5`, jam 17:45 ditulis `17.75`).
+4. Setelah diubah, simpan file (Commit & Push) ke GitHub. Perubahan akan langsung aktif di putaran berikutnya.
+
+### Cara Memaksa Bot Berjalan Manual:
+Jika Anda ingin mengetes tarikan secara langsung tanpa menunggu alarm:
+1. Masuk ke halaman **Actions** di repositori GitHub Anda.
+2. Klik nama workflow: **Run Scraper & Push Data**.
+3. Di kanan layar, klik tombol **Run workflow** -> tombol hijau **Run workflow**.
+
+---
+*Dokumentasi ini dibuat untuk memudahkan pengelolaan jangka panjang (Future-Proof).*

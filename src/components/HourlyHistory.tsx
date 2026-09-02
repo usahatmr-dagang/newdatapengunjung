@@ -417,6 +417,7 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                   { label: 'Motor', value: formatNumber(selectedSnapshot.motor), delta: getDelta(selectedSnapshot, 'motor'), color: '#94a3b8' },
                   { label: 'Mobil', value: formatNumber(selectedSnapshot.mobil), delta: getDelta(selectedSnapshot, 'mobil'), color: '#94a3b8' },
                   { label: 'Bus', value: formatNumber(selectedSnapshot.bus), delta: getDelta(selectedSnapshot, 'bus'), color: '#94a3b8' },
+                  { label: 'Sepeda', value: formatNumber(selectedSnapshot.sepeda), delta: getDelta(selectedSnapshot, 'sepeda'), color: '#94a3b8' },
                 ].map((item, i) => (
                   <div key={i} style={{
                     background: 'rgba(255,255,255,0.03)',
@@ -496,6 +497,7 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                     <th style={{ textAlign: 'right' }}>Motor</th>
                     <th style={{ textAlign: 'right' }}>Mobil</th>
                     <th style={{ textAlign: 'right' }}>Bus</th>
+                    <th style={{ textAlign: 'right' }}>Sepeda</th>
                     <th style={{ textAlign: 'right' }}>Δ Total</th>
                   </tr>
                 </thead>
@@ -547,6 +549,7 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                         <td style={{ textAlign: 'right' }}>{formatNumber(h.motor)}</td>
                         <td style={{ textAlign: 'right' }}>{formatNumber(h.mobil)}</td>
                         <td style={{ textAlign: 'right' }}>{formatNumber(h.bus)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatNumber(h.sepeda)}</td>
                         <td style={{ textAlign: 'right', color: delta > 0 ? '#34d399' : 'var(--text-muted)' }}>
                           {isFirstInShift && idx !== 0 ? `+${formatNumber(delta)}` : (idx === 0 ? '—' : `+${formatNumber(delta)}`)}
                         </td>

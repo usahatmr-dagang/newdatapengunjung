@@ -454,19 +454,47 @@ def main():
     # Check automatically based on local time if no shift specified
     current_dt = datetime.now()
     
-    # Tentukan Shift berdasarkan hari dan jam
+    # Tentukan Shift dan apakah sedang dalam jam aktif berdasarkan hari dan jam
     # Hari: 0=Senin, 1=Selasa, ..., 4=Jumat, 5=Sabtu, 6=Minggu
     weekday = current_dt.weekday()
     hour = current_dt.hour
     minute = current_dt.minute
+    time_val = hour + (minute / 60.0)
     
+    is_active = False
     shift = "siang"
-    if weekday >= 5: # Sabtu & Minggu (Weekend)
-        if hour > 17 or (hour == 17 and minute >= 30):
+    
+    if weekday <= 4: # Senin - Jumat
+        if 7.0 <= time_val <= 16.5: # 07:00 - 16:30
+            shift = "siang"
+            is_active = True
+        elif 17.0 <= time_val <= 22.25: # 17:00 - 22:15
             shift = "malam"
-    else: # Selasa - Jumat (Weekday)
-        if hour > 16 or (hour == 16 and minute >= 45):
+            is_active = True
+        elif time_val > 16.5:
             shift = "malam"
+            
+    elif weekday == 5: # Sabtu
+        if 6.5 <= time_val <= 17.5: # 06:30 - 17:30
+            shift = "siang"
+            is_active = True
+        elif 17.75 <= time_val <= 22.0: # 17:45 - 22:00
+            shift = "malam"
+            is_active = True
+        elif time_val > 17.5:
+            shift = "malam"
+            
+    elif weekday == 6: # Minggu
+        if 6.5 <= time_val <= 17.5: # 06:30 - 17:30
+            shift = "siang"
+            is_active = True
+        elif time_val > 17.5:
+            shift = "malam" # Default to malam for anything after siang, but inactive
+            
+    # Jika dijalankan otomatis (tanpa argumen tambahan) dan di luar jam operasional, berhentikan program
+    if not is_active and len(sys.argv) == 1:
+        print(f"🛑 [AUTO-STOP] Waktu saat ini ({current_dt.strftime('%H:%M WIB')}) berada di luar sesi operasional (Siang/Malam). Bot beristirahat.")
+        sys.exit(0)
         
     for arg in sys.argv[1:]:
         val = arg.lower().strip()

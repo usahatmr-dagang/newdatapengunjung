@@ -1,0 +1,18 @@
+name: Auto Cleanup Old Runs
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Berjalan setiap jam 12 malam (UTC)
+  workflow_dispatch: # Bisa dijalankan manual jika mau
+
+jobs:
+  del_runs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Menghapus Riwayat Actions Lama
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 1        # Hanya simpan riwayat 1 hari terakhir
+          keep_minimum_runs: 10 # Sisakan minimal 10 riwayat agar tidak kosong melompong

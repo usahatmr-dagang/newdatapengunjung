@@ -33,6 +33,8 @@ jobs:
           echo "$FIREBASE_CREDENTIALS" > serviceAccountKey.json
           
       - name: Run Scraper
+        env:
+          TZ: 'Asia/Jakarta'
         run: |
           python3 tarik_data.py
           

@@ -8,11 +8,13 @@ on:
 jobs:
   del_runs:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - name: Menghapus Riwayat Actions Lama
         uses: Mattraks/delete-workflow-runs@v2
         with:
           token: ${{ github.token }}
           repository: ${{ github.repository }}
-          retain_days: 1        # Hanya simpan riwayat 1 hari terakhir
-          keep_minimum_runs: 10 # Sisakan minimal 10 riwayat agar tidak kosong melompong
+          retain_days: 0        # 0 = hapus semua tanpa mempedulikan umur harinya
+          keep_minimum_runs: 10 # TAPI tetap sisakan 10 riwayat paling baru

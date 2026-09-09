@@ -88,4 +88,24 @@ Jika Anda ingin mengetes tarikan secara langsung tanpa menunggu alarm:
 3. Di kanan layar, klik tombol **Run workflow** -> tombol hijau **Run workflow**.
 
 ---
-*Dokumentasi ini dibuat untuk memudahkan pengelolaan jangka panjang (Future-Proof).*
+
+## 6. 🔐 Daftar Akun & Kredensial Penting (Troubleshooting)
+
+Agar tidak lupa di kemudian hari saat perlu melakukan perbaikan atau *deploy* ulang (terutama saat mengalami pesan *Error: Failed to get Firebase project*), berikut adalah daftar akun penting yang memegang kendali atas sistem ini:
+
+1. **Akun GitHub (Kode & Serverless Actions):**
+   - **Username/Email:** `usahatmr-dagang` / `usahatmr@gmail.com`
+   - **Fungsi:** Tempat penyimpanan seluruh *source code* (React & Python), serta tempat berjalannya mesin robot otomatis (GitHub Actions).
+
+2. **Akun Firebase (Database & Hosting Web App):**
+   - **Email Pemilik Utama:** `alfatahsamadi@gmail.com`
+   - **Nama Project Firebase:** `tmr-scraper-db`
+   - **Fungsi:** Menyimpan database *real-time* (Firestore) dan tempat peluncuran (*hosting*) tampilan Web App.
+   - **Catatan Sangat Penting:** Jika Anda mengedit tampilan website (Frontend React) dan ingin mem-publish perubahannya, Anda **WAJIB** login menggunakan email `alfatahsamadi@gmail.com` di terminal. Jika Anda menggunakan email lain, sistem akan menolaknya.
+   - *Cara Deploy (Publish):* Jalankan `npx firebase-tools logout`, lalu `npx firebase-tools login` (pilih akun alfatahsamadi di browser), kemudian barulah jalankan `npm run build && npx firebase-tools deploy --only hosting`.
+
+3. **Akun Alarm Pemicu Eksternal (Cron-job.org):**
+   - **Fungsi:** Layanan web gratis penekan tombol *trigger* API GitHub secara persis setiap menit ke 0, 15, 30, dan 45. Sistem ini menggunakan *Personal Access Token* (PAT) milik GitHub Anda agar diizinkan memencet tombol *run*.
+
+---
+*Dokumentasi ini diperbarui untuk memudahkan pengelolaan jangka panjang (Future-Proof).*

@@ -85,6 +85,114 @@ app.get('/api/history/:date', (req, res) => {
   }
 });
 
+// Endpoint 1c: Get monthly aggregated records
+app.get('/api/monthly_records', (req, res) => {
+  try {
+    const files = fs.readdirSync(DATA_DIR);
+    const monthlyData = {};
+
+    files.forEach(file => {
+      if (file.endsWith('.json')) {
+        const filePath = path.join(DATA_DIR, file);
+        try {
+          const content = fs.readFileSync(filePath, 'utf8');
+          const data = JSON.parse(content);
+          if (!data.date) return;
+          
+          const monthKey = data.date.substring(0, 7); // YYYY-MM
+          
+          if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = {
+              month: monthKey,
+              total_pengunjung: 0,
+              motor: 0, mobil: 0, bus: 0, sepeda: 0,
+              pps: 0, tsa: 0, anak: 0, dewasa: 0
+            };
+          }
+
+          // Combine siang and malam
+          const s = data.siang?.rekap || {};
+          const m = data.malam?.rekap || {};
+
+          monthlyData[monthKey].total_pengunjung += (s.total_pengunjung || 0) + (m.total_pengunjung || 0);
+          monthlyData[monthKey].motor += (s.motor || 0) + (m.motor || 0);
+          monthlyData[monthKey].mobil += (s.mobil || 0) + (m.mobil || 0);
+          monthlyData[monthKey].bus += (s.bus || 0) + (m.bus || 0);
+          monthlyData[monthKey].sepeda += (s.sepeda || 0) + (m.sepeda || 0);
+          monthlyData[monthKey].pps += (s.pps || 0) + (m.pps || 0);
+          monthlyData[monthKey].tsa += (s.tsa || 0) + (m.tsa || 0);
+          monthlyData[monthKey].anak += (s.anak || 0) + (m.anak || 0);
+          monthlyData[monthKey].dewasa += (s.dewasa || 0) + (m.dewasa || 0);
+        } catch (err) {
+          console.error(`Gagal membaca file ${file}:`, err);
+        }
+      }
+    });
+
+    const records = Object.values(monthlyData);
+    records.sort((a, b) => b.month.localeCompare(a.month)); // Descending by month
+
+    res.json(records);
+  } catch (error) {
+    console.error('Error fetching monthly records:', error);
+    res.status(500).json({ error: 'Gagal mengambil data bulanan' });
+  }
+});
+
+// Endpoint 1d: Get yearly aggregated records
+app.get('/api/yearly_records', (req, res) => {
+  try {
+    const files = fs.readdirSync(DATA_DIR);
+    const yearlyData = {};
+
+    files.forEach(file => {
+      if (file.endsWith('.json')) {
+        const filePath = path.join(DATA_DIR, file);
+        try {
+          const content = fs.readFileSync(filePath, 'utf8');
+          const data = JSON.parse(content);
+          if (!data.date) return;
+          
+          const yearKey = data.date.substring(0, 4); // YYYY
+          
+          if (!yearlyData[yearKey]) {
+            yearlyData[yearKey] = {
+              year: yearKey,
+              total_pengunjung: 0,
+              motor: 0, mobil: 0, bus: 0, sepeda: 0,
+              pps: 0, tsa: 0, anak: 0, dewasa: 0
+            };
+          }
+
+          // Combine siang and malam
+          const s = data.siang?.rekap || {};
+          const m = data.malam?.rekap || {};
+
+          yearlyData[yearKey].total_pengunjung += (s.total_pengunjung || 0) + (m.total_pengunjung || 0);
+          yearlyData[yearKey].motor += (s.motor || 0) + (m.motor || 0);
+          yearlyData[yearKey].mobil += (s.mobil || 0) + (m.mobil || 0);
+          yearlyData[yearKey].bus += (s.bus || 0) + (m.bus || 0);
+          yearlyData[yearKey].sepeda += (s.sepeda || 0) + (m.sepeda || 0);
+          yearlyData[yearKey].pps += (s.pps || 0) + (m.pps || 0);
+          yearlyData[yearKey].tsa += (s.tsa || 0) + (m.tsa || 0);
+          yearlyData[yearKey].anak += (s.anak || 0) + (m.anak || 0);
+          yearlyData[yearKey].dewasa += (s.dewasa || 0) + (m.dewasa || 0);
+        } catch (err) {
+          console.error(`Gagal membaca file ${file}:`, err);
+        }
+      }
+    });
+
+    const records = Object.values(yearlyData);
+    records.sort((a, b) => b.year.localeCompare(a.year)); // Descending by year
+
+    res.json(records);
+  } catch (error) {
+    console.error('Error fetching yearly records:', error);
+    res.status(500).json({ error: 'Gagal mengambil data tahunan' });
+  }
+});
+
 // Endpoint 2: Stream scraper run logs (with concurrency lock protection)
 app.post('/api/run-scraper', (req, res) => {
   const { shift, mode } = req.body;

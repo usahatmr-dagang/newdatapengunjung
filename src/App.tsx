@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from './lib/firebase';
 
 import type { DailyRecord } from './types';
@@ -25,7 +25,7 @@ function App() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const q = query(collection(db, 'daily_records'), orderBy('date', 'desc'), limit(30));
+        const q = query(collection(db, 'daily_records'), orderBy('date', 'desc'));
         const snapshot = await getDocs(q);
         
         const fetchedDocs: DailyRecord[] = [];

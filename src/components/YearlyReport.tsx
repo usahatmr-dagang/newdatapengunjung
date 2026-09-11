@@ -45,6 +45,11 @@ export const YearlyReport: React.FC = () => {
         
         const yearlyMap: Record<string, YearlyRecord> = {};
         
+        const safeNum = (val: any) => {
+           const parsed = parseInt(val, 10);
+           return isNaN(parsed) ? 0 : parsed;
+        };
+
         docs.forEach(data => {
            const dateStr = data.date || '';
            if (!dateStr) return;
@@ -63,15 +68,15 @@ export const YearlyReport: React.FC = () => {
            const s = data.siang?.rekap || {};
            const m = data.malam?.rekap || {};
            
-           r.total_pengunjung += (s.total_pengunjung || 0) + (m.total_pengunjung || 0);
-           r.motor += (s.motor || 0) + (m.motor || 0);
-           r.mobil += (s.mobil || 0) + (m.mobil || 0);
-           r.bus += (s.bus || 0) + (m.bus || 0);
-           r.sepeda += (s.sepeda || 0) + (m.sepeda || 0);
-           r.pps += (s.pps || 0) + (m.pps || 0);
-           r.tsa += (s.tsa || 0) + (m.tsa || 0);
-           r.anak += (s.anak || 0) + (m.anak || 0);
-           r.dewasa += (s.dewasa || 0) + (m.dewasa || 0);
+           r.total_pengunjung += safeNum(s.total_pengunjung) + safeNum(m.total_pengunjung);
+           r.motor += safeNum(s.motor) + safeNum(m.motor);
+           r.mobil += safeNum(s.mobil) + safeNum(m.mobil);
+           r.bus += safeNum(s.bus) + safeNum(m.bus);
+           r.sepeda += safeNum(s.sepeda) + safeNum(m.sepeda);
+           r.pps += safeNum(s.pps) + safeNum(m.pps);
+           r.tsa += safeNum(s.tsa) + safeNum(m.tsa);
+           r.anak += safeNum(s.anak) + safeNum(m.anak);
+           r.dewasa += safeNum(s.dewasa) + safeNum(m.dewasa);
         });
         
         const sorted = Object.values(yearlyMap).sort((a, b) => b.year.localeCompare(a.year));

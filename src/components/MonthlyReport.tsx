@@ -14,6 +14,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { Calendar, Users } from 'lucide-react';
+import type { DailyRecord } from '../types';
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, BarElement,
@@ -33,8 +34,15 @@ interface MonthlyRecord {
   dewasa: number;
 }
 
+const safeNum = (val: any) => {
+  const parsed = parseInt(val, 10);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 export const MonthlyReport: React.FC = () => {
   const [data, setData] = useState<MonthlyRecord[]>([]);
+  const [rawDocs, setRawDocs] = useState<DailyRecord[]>([]);
+  const [selectedMonthStr, setSelectedMonthStr] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -43,12 +51,13 @@ export const MonthlyReport: React.FC = () => {
       try {
         setLoading(true);
         const snapshot = await getDocs(collection(db, 'daily_records'));
-        const docs = snapshot.docs.map(doc => doc.data());
+        const docs = snapshot.docs.map(doc => doc.data() as any);
+        setRawDocs(docs);
         
         const monthlyMap: Record<string, MonthlyRecord> = {};
         
-        docs.forEach(data => {
-           const dateStr = data.date || '';
+        docs.forEach((row: any) => {
+           const dateStr = row.date || '';
            if (!dateStr) return;
            const monthStr = dateStr.substring(0, 7); // YYYY-MM
            
@@ -62,18 +71,18 @@ export const MonthlyReport: React.FC = () => {
            }
            
            const r = monthlyMap[monthStr];
-           const s = data.siang?.rekap || {};
-           const m = data.malam?.rekap || {};
+           const s = row.siang?.rekap || {};
+           const m = row.malam?.rekap || {};
            
-           r.total_pengunjung += (s.total_pengunjung || 0) + (m.total_pengunjung || 0);
-           r.motor += (s.motor || 0) + (m.motor || 0);
-           r.mobil += (s.mobil || 0) + (m.mobil || 0);
-           r.bus += (s.bus || 0) + (m.bus || 0);
-           r.sepeda += (s.sepeda || 0) + (m.sepeda || 0);
-           r.pps += (s.pps || 0) + (m.pps || 0);
-           r.tsa += (s.tsa || 0) + (m.tsa || 0);
-           r.anak += (s.anak || 0) + (m.anak || 0);
-           r.dewasa += (s.dewasa || 0) + (m.dewasa || 0);
+           r.total_pengunjung += safeNum(s.total_pengunjung) + safeNum(m.total_pengunjung);
+           r.motor += safeNum(s.motor) + safeNum(m.motor);
+           r.mobil += safeNum(s.mobil) + safeNum(m.mobil);
+           r.bus += safeNum(s.bus) + safeNum(m.bus);
+           r.sepeda += safeNum(s.sepeda) + safeNum(m.sepeda);
+           r.pps += safeNum(s.pps) + safeNum(m.pps);
+           r.tsa += safeNum(s.tsa) + safeNum(m.tsa);
+           r.anak += safeNum(s.anak) + safeNum(m.anak);
+           r.dewasa += safeNum(s.dewasa) + safeNum(m.dewasa);
         });
         
         const sorted = Object.values(monthlyMap).sort((a, b) => b.month.localeCompare(a.month));
@@ -93,6 +102,13 @@ export const MonthlyReport: React.FC = () => {
     const [y, m] = yyyy_mm.split('-');
     const date = new Date(parseInt(y), parseInt(m) - 1, 1);
     return date.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+  };
+
+  const formatDate = (yyyy_mm_dd: string) => {
+    const parts = yyyy_mm_dd.split('-');
+    if (parts.length !== 3) return yyyy_mm_dd;
+    const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    return date.toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
   if (loading) {
@@ -199,6 +215,82 @@ export const MonthlyReport: React.FC = () => {
         <div style={{ height: '300px', width: '100%' }}>
           <Line data={chartData} options={chartOptions as any} />
         </div>
+      </div>
+
+      {/* Daily Drilldown Section */}
+      <div className="glass-panel" style={{ overflowX: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+          <h3 style={{ color: '#fff', fontSize: '1.1rem', margin: 0 }}>Laporan Harian per Bulan</h3>
+          <select 
+            value={selectedMonthStr} 
+            onChange={(e) => setSelectedMonthStr(e.target.value)}
+            style={{ 
+              background: 'rgba(0,0,0,0.5)', color: '#fff', 
+              border: '1px solid rgba(255,255,255,0.2)', padding: '8px 12px', 
+              borderRadius: '8px', outline: 'none', cursor: 'pointer'
+            }}
+          >
+            <option value="">-- Pilih Bulan --</option>
+            {data.map(m => (
+              <option key={m.month} value={m.month}>{formatMonth(m.month)}</option>
+            ))}
+          </select>
+        </div>
+        
+        {selectedMonthStr ? (
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', minWidth: '800px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                <th style={{ padding: '12px 8px', textAlign: 'left' }}>Tanggal</th>
+                <th style={{ padding: '12px 8px', color: '#3b82f6' }}>Total Pengunjung</th>
+                <th style={{ padding: '12px 8px' }}>Dewasa</th>
+                <th style={{ padding: '12px 8px' }}>Anak</th>
+                <th style={{ padding: '12px 8px' }}>Motor</th>
+                <th style={{ padding: '12px 8px' }}>Mobil</th>
+                <th style={{ padding: '12px 8px' }}>Bus</th>
+                <th style={{ padding: '12px 8px' }}>PPS</th>
+                <th style={{ padding: '12px 8px' }}>TSA</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rawDocs
+                .filter((d: any) => (d.date || '').startsWith(selectedMonthStr))
+                .sort((a: any, b: any) => (b.date || '').localeCompare(a.date || ''))
+                .map((row: any) => {
+                  const s = row.siang?.rekap || {};
+                  const m = row.malam?.rekap || {};
+                  const total = safeNum(s.total_pengunjung) + safeNum(m.total_pengunjung);
+                  const dewasa = safeNum(s.dewasa) + safeNum(m.dewasa);
+                  const anak = safeNum(s.anak) + safeNum(m.anak);
+                  const motor = safeNum(s.motor) + safeNum(m.motor);
+                  const mobil = safeNum(s.mobil) + safeNum(m.mobil);
+                  const bus = safeNum(s.bus) + safeNum(m.bus);
+                  const pps = safeNum(s.pps) + safeNum(m.pps);
+                  const tsa = safeNum(s.tsa) + safeNum(m.tsa);
+                  
+                  return (
+                    <tr key={row.date} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.95rem' }}>
+                      <td style={{ padding: '12px 8px', textAlign: 'left', fontWeight: '500', color: '#e2e8f0' }}>
+                        {formatDate(row.date || '')}
+                      </td>
+                      <td style={{ padding: '12px 8px', fontWeight: 'bold', color: '#60a5fa' }}>{formatNumber(total)}</td>
+                      <td style={{ padding: '12px 8px', color: '#cbd5e1' }}>{formatNumber(dewasa)}</td>
+                      <td style={{ padding: '12px 8px', color: '#cbd5e1' }}>{formatNumber(anak)}</td>
+                      <td style={{ padding: '12px 8px', color: '#cbd5e1' }}>{formatNumber(motor)}</td>
+                      <td style={{ padding: '12px 8px', color: '#cbd5e1' }}>{formatNumber(mobil)}</td>
+                      <td style={{ padding: '12px 8px', color: '#cbd5e1' }}>{formatNumber(bus)}</td>
+                      <td style={{ padding: '12px 8px', color: '#cbd5e1' }}>{formatNumber(pps)}</td>
+                      <td style={{ padding: '12px 8px', color: '#cbd5e1' }}>{formatNumber(tsa)}</td>
+                    </tr>
+                  );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+            Silakan pilih bulan di atas untuk melihat rincian laporan per tanggal.
+          </div>
+        )}
       </div>
 
       {/* Table Section */}

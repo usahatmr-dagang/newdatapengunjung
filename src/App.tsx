@@ -6,15 +6,19 @@ import type { DailyRecord } from './types';
 import { DashboardPengunjung } from './components/DashboardPengunjung';
 import { HourlyHistory } from './components/HourlyHistory';
 import { ScraperStatus } from './components/ScraperStatus';
+import { MonthlyReport } from './components/MonthlyReport';
+import { YearlyReport } from './components/YearlyReport';
 import { 
   Settings, 
   Zap,
   Users,
-  Clock
+  Clock,
+  Calendar,
+  BarChart2
 } from 'lucide-react';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'riwayat_jam' | 'status'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'riwayat_jam' | 'status' | 'bulanan' | 'tahunan'>('dashboard');
   const [records, setRecords] = useState<DailyRecord[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -75,6 +79,20 @@ function App() {
             Riwayat Jam (15 Menit)
           </button>
           <button 
+            className={`nav-tab ${activeTab === 'bulanan' ? 'active' : ''}`}
+            onClick={() => setActiveTab('bulanan')}
+          >
+            <Calendar size={16} />
+            Laporan Bulanan
+          </button>
+          <button 
+            className={`nav-tab ${activeTab === 'tahunan' ? 'active' : ''}`}
+            onClick={() => setActiveTab('tahunan')}
+          >
+            <BarChart2 size={16} />
+            Laporan Tahunan
+          </button>
+          <button 
             className={`nav-tab ${activeTab === 'status' ? 'active' : ''}`}
             onClick={() => setActiveTab('status')}
           >
@@ -108,6 +126,8 @@ function App() {
             {activeTab === 'status' && (
               <ScraperStatus data={records} />
             )}
+            {activeTab === 'bulanan' && <MonthlyReport />}
+            {activeTab === 'tahunan' && <YearlyReport />}
           </>
         )}
       </main>

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { 
   Chart as ChartJS, 
   CategoryScale, 
@@ -40,13 +42,42 @@ export const MonthlyReport: React.FC = () => {
     const fetchMonthlyData = async () => {
       try {
         setLoading(true);
-        const host = window.location.hostname;
-        const res = await fetch(`http://${host}:5001/api/monthly_records`);
-        if (!res.ok) throw new Error('Gagal mengambil data bulanan');
-        const json = await res.json();
-        // The API returns descending by month, let's keep it that way for the table,
-        // but for charts we usually want ascending (oldest to newest).
-        setData(json);
+        const snapshot = await getDocs(collection(db, 'daily_records'));
+        const docs = snapshot.docs.map(doc => doc.data());
+        
+        const monthlyMap: Record<string, MonthlyRecord> = {};
+        
+        docs.forEach(data => {
+           const dateStr = data.date || '';
+           if (!dateStr) return;
+           const monthStr = dateStr.substring(0, 7); // YYYY-MM
+           
+           if (!monthlyMap[monthStr]) {
+             monthlyMap[monthStr] = {
+               month: monthStr,
+               total_pengunjung: 0,
+               motor: 0, mobil: 0, bus: 0, sepeda: 0,
+               pps: 0, tsa: 0, anak: 0, dewasa: 0
+             };
+           }
+           
+           const r = monthlyMap[monthStr];
+           const s = data.siang?.rekap || {};
+           const m = data.malam?.rekap || {};
+           
+           r.total_pengunjung += (s.total_pengunjung || 0) + (m.total_pengunjung || 0);
+           r.motor += (s.motor || 0) + (m.motor || 0);
+           r.mobil += (s.mobil || 0) + (m.mobil || 0);
+           r.bus += (s.bus || 0) + (m.bus || 0);
+           r.sepeda += (s.sepeda || 0) + (m.sepeda || 0);
+           r.pps += (s.pps || 0) + (m.pps || 0);
+           r.tsa += (s.tsa || 0) + (m.tsa || 0);
+           r.anak += (s.anak || 0) + (m.anak || 0);
+           r.dewasa += (s.dewasa || 0) + (m.dewasa || 0);
+        });
+        
+        const sorted = Object.values(monthlyMap).sort((a, b) => b.month.localeCompare(a.month));
+        setData(sorted);
       } catch (err: any) {
         setError(err.message);
       } finally {

@@ -25,18 +25,15 @@ Script ini adalah otak utama yang menarik data dari website 3A dan IWM.
 Bot ini dibuat pintar agar tidak mengonsumsi kuota komputasi GitHub saat TMR sedang tutup. Jika alarm berbunyi di luar jam operasional, bot akan langsung mati secara otomatis (*Auto-Stop*).
 
 Berikut aturan jam operasionalnya:
-- **Senin - Jumat (Weekday):**
-  - Siang: Pukul 07:00 - 16:30 WIB
-  - Malam: Pukul 17:00 - 22:15 WIB
-- **Sabtu:**
-  - Siang: Pukul 06:30 - 17:30 WIB
-  - Malam: Pukul 17:45 - 22:00 WIB
-- **Minggu:**
-  - Siang: Pukul 06:30 - 17:30 WIB
-  - Malam: *Tidak ada* (Libur).
+- **Senin - Minggu (Setiap Hari):**
+  - Siang: Pukul 06:30/07:00 - 16:30 WIB
+- **Selasa - Sabtu:**
+  - Malam: Pukul 16:45 - 22:15 WIB
+- **Senin & Minggu Malam:** *Tidak ada shift malam* (Libur).
 
-### Logika Ekstraksi Data
+### Logika Ekstraksi Data & Auto-Stop
 - **Pembagian Shift:** Data direkap sebagai "siang" atau "malam" secara otomatis berdasarkan jam server saat bot berjalan.
+- **Auto-Stop Tutup (2 Jam):** Jika total pengunjung stabil di angka 0 selama 2 jam berturut-turut (8 pengecekan), bot menyimpulkan area tutup dan menonaktifkan dirinya sendiri hingga keesokan harinya.
 - **IWM Fallback:** Jika website IWM (Old Gate) sedang lambat/down sehingga tidak bisa ditarik, bot **TIDAK AKAN** mengubah nilainya menjadi 0. Bot akan mengambil riwayat angka terakhir dari file JSON lokal untuk menyelamatkan tampilan Dashboard.
 
 ---

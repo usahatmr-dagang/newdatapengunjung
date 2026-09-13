@@ -464,32 +464,18 @@ def main():
     is_active = False
     shift = "siang"
     
-    if weekday <= 4: # Senin - Jumat
-        if 7.0 <= time_val <= 16.5: # 07:00 - 16:30
-            shift = "siang"
-            is_active = True
-        elif 17.0 <= time_val <= 22.25: # 17:00 - 22:15
-            shift = "malam"
-            is_active = True
-        elif time_val > 16.5:
-            shift = "malam"
-            
-    elif weekday == 5: # Sabtu
-        if 6.5 <= time_val <= 17.5: # 06:30 - 17:30
-            shift = "siang"
-            is_active = True
-        elif 17.75 <= time_val <= 22.0: # 17:45 - 22:00
-            shift = "malam"
-            is_active = True
-        elif time_val > 17.5:
-            shift = "malam"
-            
-    elif weekday == 6: # Minggu
-        if 6.5 <= time_val <= 17.5: # 06:30 - 17:30
-            shift = "siang"
-            is_active = True
-        elif time_val > 17.5:
-            shift = "malam" # Default to malam for anything after siang, but inactive
+    start_siang = 7.0 if weekday <= 4 else 6.5
+    
+    if start_siang <= time_val <= 16.5: # Siang Senin - Minggu sampai 16:30
+        shift = "siang"
+        is_active = True
+    elif time_val > 16.5:
+        shift = "malam"
+        # Malam aktif jika Selasa(1) sampai Sabtu(5) dan dari pukul 16:45
+        if 1 <= weekday <= 5:
+            end_malam = 22.0 if weekday == 5 else 22.25
+            if 16.75 <= time_val <= end_malam:
+                is_active = True
             
     # Jika dijalankan otomatis (tanpa argumen tambahan) dan di luar jam operasional, berhentikan program
     if not is_active and len(sys.argv) == 1:
@@ -737,21 +723,17 @@ def main():
             
         print(f"✅ [LOKAL] Data Shift {shift.upper()} berhasil disimpan di {file_path}!")
         
-        # CEK APAKAH HARI INI TUTUP (TIDAK ADA PENGUNJUNG SAMPAI JAM 09:00)
-        current_hour = datetime.now().hour
-        if shift == "siang" and current_hour >= 9 and payload["rekap"].get("total_pengunjung", 0) == 0:
-            existing["stop_for_today"] = True
-            print("🛑 [AUTO-STOP] Ragunan tutup hari ini (Data 0 hingga pukul 09:00 WIB). Scraper dihentikan untuk hari ini!")
-
-        # CEK APAKAH DATA STABIL 2 JAM (8 SNAPSHOT TERAKHIR SAMA)
-        # Hanya aktifkan ini jika shift malam agar tidak mati otomatis di pagi hari saat belum ada pengunjung
-        if shift == "malam" and len(existing_history) >= 8:
+        # CEK APAKAH DATA TETAP 0 SELAMA 2 JAM (8 SNAPSHOT TERAKHIR)
+        if len(existing_history) >= 8:
             last_8 = existing_history[-8:]
             totals = [h.get("total_pengunjung", 0) for h in last_8]
-            # Jika 8 snapshot terakhir total pengunjungnya sama persis
-            if all(t == totals[0] for t in totals):
+            if all(t == 0 for t in totals):
                 existing["stop_for_today"] = True
-                print("🛑 [AUTO-STOP] Data stabil (tidak berubah) selama 2 jam terakhir. Scraper dihentikan untuk hari ini!")
+                print("🛑 [AUTO-STOP] Ragunan tutup (Data tetap 0 selama 2 jam). Scraper dihentikan untuk hari ini!")
+            # Juga cek apakah data stabil (tidak berubah) di malam hari
+            elif shift == "malam" and all(t == totals[0] for t in totals):
+                existing["stop_for_today"] = True
+                print("🛑 [AUTO-STOP] Data stabil (tidak berubah) selama 2 jam terakhir di malam hari. Scraper dihentikan untuk hari ini!")
 
         # PUSH TO FIREBASE
         if db:

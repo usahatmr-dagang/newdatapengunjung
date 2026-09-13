@@ -347,20 +347,20 @@ export const DashboardPengunjung: React.FC<DashboardPengunjungProps> = ({ data }
   const iwmData = parseIWMTickets();
 
   const animalImages = [
-    "https://images.unsplash.com/photo-1549480017-d76466a4b7e8?auto=format&fit=crop&q=80&w=1920", // Harimau
-    "https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?auto=format&fit=crop&q=80&w=1920", // Gajah
-    "https://images.unsplash.com/photo-1547471080-7cb2ac647132?auto=format&fit=crop&q=80&w=1920", // Jerapah
-    "https://images.unsplash.com/photo-1545042746-1db81f62b083?auto=format&fit=crop&q=80&w=1920", // Orangutan
-    "https://images.unsplash.com/photo-1526095179574-86e545346ae6?auto=format&fit=crop&q=80&w=1920", // Zebra
-    "https://images.unsplash.com/photo-1601275225755-f6a6c1730cb1?auto=format&fit=crop&q=80&w=1920", // Kapibara
-    "https://images.unsplash.com/photo-1517825738774-7de9363ef735?auto=format&fit=crop&q=80&w=1920", // Singa
-    "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&q=80&w=1920", // Badak
-    "https://images.unsplash.com/photo-1550252134-453000965e31?auto=format&fit=crop&q=80&w=1920", // Komodo
-    "https://images.unsplash.com/photo-1534188753412-3e26d0d618d6?auto=format&fit=crop&q=80&w=1920", // Monyet
-    "https://images.unsplash.com/photo-1590425316314-5b6fb0a58579?auto=format&fit=crop&q=80&w=1920", // Burung Merak
-    "https://images.unsplash.com/photo-1535083783855-76ae62b2914e?auto=format&fit=crop&q=80&w=1920", // Macan Tutul
-    "https://images.unsplash.com/photo-1541414779316-956a5084c0d4?auto=format&fit=crop&q=80&w=1920", // Flamingo
-    "https://images.unsplash.com/photo-1588145244583-05187eec6544?auto=format&fit=crop&q=80&w=1920"  // Beruang
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1549480017-d76466a4b7e8&w=1920&output=webp", // Harimau
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1557050543-4d5f4e07ef46&w=1920&output=webp", // Gajah
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1547471080-7cb2ac647132&w=1920&output=webp", // Jerapah
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1545042746-1db81f62b083&w=1920&output=webp", // Orangutan
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1526095179574-86e545346ae6&w=1920&output=webp", // Zebra
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1601275225755-f6a6c1730cb1&w=1920&output=webp", // Kapibara
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1517825738774-7de9363ef735&w=1920&output=webp", // Singa
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1534567153574-2b12153a87f0&w=1920&output=webp", // Badak
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1550252134-453000965e31&w=1920&output=webp", // Komodo
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1534188753412-3e26d0d618d6&w=1920&output=webp", // Monyet
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1590425316314-5b6fb0a58579&w=1920&output=webp", // Burung Merak
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1535083783855-76ae62b2914e&w=1920&output=webp", // Macan Tutul
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1541414779316-956a5084c0d4&w=1920&output=webp", // Flamingo
+    "https://wsrv.nl/?url=images.unsplash.com/photo-1588145244583-05187eec6544&w=1920&output=webp"  // Beruang
   ];
   
   const dayIndex = new Date().getDate() % animalImages.length;

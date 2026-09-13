@@ -419,20 +419,14 @@ export const DashboardPengunjung: React.FC<DashboardPengunjungProps> = ({ data }
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
             
-            {/* Left Section: Ragunan Logo + Titles */}
+            {/* Left Section: Titles */}
             <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-              <img src="/logo-ragunan.png" alt="Ragunan" style={{ height: '70px', objectFit: 'contain' }} />
               <div>
-                <h1 className="header-title">DATA PENGUNJUNG</h1>
+                <h1 className="header-title">DATA PENGUNJUNG TAMAN MARGASATWA RAGUNAN</h1>
                 <div className="datetime-badge">
                   {getFormattedDateString()}
                 </div>
               </div>
-            </div>
-
-            {/* Right Section: DKI Logo */}
-            <div>
-              <img src="/logo-dki.png" alt="Pemprov DKI" style={{ height: '70px', objectFit: 'contain' }} />
             </div>
 
           </div>

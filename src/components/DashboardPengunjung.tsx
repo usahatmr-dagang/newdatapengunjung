@@ -420,7 +420,7 @@ export const DashboardPengunjung: React.FC<DashboardPengunjungProps> = ({ data }
           <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
             {/* Logos */}
             <div style={{ display: 'flex', gap: '15px' }}>
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Jaya_Raya_DKI_Jakarta.svg/512px-Jaya_Raya_DKI_Jakarta.svg.png" alt="Pemprov DKI" style={{ height: '70px', objectFit: 'contain' }} />
+              <img src="/logo-dki.png" alt="Pemprov DKI" style={{ height: '70px', objectFit: 'contain' }} />
               <img src="/logo-ragunan.png" alt="Ragunan" style={{ height: '70px', objectFit: 'contain' }} />
             </div>
             <div>

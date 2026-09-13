@@ -417,18 +417,24 @@ export const DashboardPengunjung: React.FC<DashboardPengunjungProps> = ({ data }
 
         <div className="info-content" style={{ position: 'relative', zIndex: 2 }}>
           
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-            {/* Logos */}
-            <div style={{ display: 'flex', gap: '15px' }}>
-              <img src="/logo-dki.png" alt="Pemprov DKI" style={{ height: '70px', objectFit: 'contain' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+            
+            {/* Left Section: Ragunan Logo + Titles */}
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
               <img src="/logo-ragunan.png" alt="Ragunan" style={{ height: '70px', objectFit: 'contain' }} />
-            </div>
-            <div>
-              <h1 className="header-title">DATA PENGUNJUNG</h1>
-              <div className="datetime-badge">
-                {getFormattedDateString()}
+              <div>
+                <h1 className="header-title">DATA PENGUNJUNG</h1>
+                <div className="datetime-badge">
+                  {getFormattedDateString()}
+                </div>
               </div>
             </div>
+
+            {/* Right Section: DKI Logo */}
+            <div>
+              <img src="/logo-dki.png" alt="Pemprov DKI" style={{ height: '70px', objectFit: 'contain' }} />
+            </div>
+
           </div>
 
           <div className="main-stats-container">

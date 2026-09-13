@@ -347,17 +347,24 @@ export const DashboardPengunjung: React.FC<DashboardPengunjungProps> = ({ data }
   const iwmData = parseIWMTickets();
 
   const animalImages = [
-    "https://images.unsplash.com/photo-1549480017-d76466a4b7e8?auto=format&fit=crop&q=80&w=1920", // Minggu (Harimau)
-    "https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?auto=format&fit=crop&q=80&w=1920", // Senin (Gajah)
-    "https://images.unsplash.com/photo-1547471080-7cb2ac647132?auto=format&fit=crop&q=80&w=1920", // Selasa (Jerapah)
-    "https://images.unsplash.com/photo-1545042746-1db81f62b083?auto=format&fit=crop&q=80&w=1920", // Rabu (Orangutan)
-    "https://images.unsplash.com/photo-1526095179574-86e545346ae6?auto=format&fit=crop&q=80&w=1920", // Kamis (Zebra)
-    "https://images.unsplash.com/photo-1601275225755-f6a6c1730cb1?auto=format&fit=crop&q=80&w=1920", // Jumat (Kapibara)
-    "https://images.unsplash.com/photo-1517825738774-7de9363ef735?auto=format&fit=crop&q=80&w=1920"  // Sabtu (Singa)
+    "https://images.unsplash.com/photo-1549480017-d76466a4b7e8?auto=format&fit=crop&q=80&w=1920", // Harimau
+    "https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?auto=format&fit=crop&q=80&w=1920", // Gajah
+    "https://images.unsplash.com/photo-1547471080-7cb2ac647132?auto=format&fit=crop&q=80&w=1920", // Jerapah
+    "https://images.unsplash.com/photo-1545042746-1db81f62b083?auto=format&fit=crop&q=80&w=1920", // Orangutan
+    "https://images.unsplash.com/photo-1526095179574-86e545346ae6?auto=format&fit=crop&q=80&w=1920", // Zebra
+    "https://images.unsplash.com/photo-1601275225755-f6a6c1730cb1?auto=format&fit=crop&q=80&w=1920", // Kapibara
+    "https://images.unsplash.com/photo-1517825738774-7de9363ef735?auto=format&fit=crop&q=80&w=1920", // Singa
+    "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&q=80&w=1920", // Badak
+    "https://images.unsplash.com/photo-1550252134-453000965e31?auto=format&fit=crop&q=80&w=1920", // Komodo
+    "https://images.unsplash.com/photo-1534188753412-3e26d0d618d6?auto=format&fit=crop&q=80&w=1920", // Monyet
+    "https://images.unsplash.com/photo-1590425316314-5b6fb0a58579?auto=format&fit=crop&q=80&w=1920", // Burung Merak
+    "https://images.unsplash.com/photo-1535083783855-76ae62b2914e?auto=format&fit=crop&q=80&w=1920", // Macan Tutul
+    "https://images.unsplash.com/photo-1541414779316-956a5084c0d4?auto=format&fit=crop&q=80&w=1920", // Flamingo
+    "https://images.unsplash.com/photo-1588145244583-05187eec6544?auto=format&fit=crop&q=80&w=1920"  // Beruang
   ];
   
-  const dayOfWeek = new Date().getDay();
-  const selectedAnimalImage = animalImages[dayOfWeek];
+  const dayIndex = new Date().getDate() % animalImages.length;
+  const selectedAnimalImage = animalImages[dayIndex];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -393,9 +400,9 @@ export const DashboardPengunjung: React.FC<DashboardPengunjungProps> = ({ data }
           bottom: 0,
           backgroundImage: `url('${selectedAnimalImage}')`,
           backgroundSize: 'cover',
-          backgroundPosition: 'left center',
-          transform: 'scale(1.35)', // Zoom in 35%
-          transformOrigin: 'left center', // Keep left edge locked, push rest to the right
+          backgroundPosition: 'right center',
+          transform: 'scale(1.15)', // Zoom in 15%
+          transformOrigin: 'right center', // Keep right edge locked, push rest to the left
           zIndex: 0
         }} />
 
@@ -410,10 +417,11 @@ export const DashboardPengunjung: React.FC<DashboardPengunjungProps> = ({ data }
 
         <div className="info-content" style={{ position: 'relative', zIndex: 2 }}>
           
-          <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-            {/* Logo placeholder - using generic text if no logo available, or external url */}
-            <div style={{ background: '#1e293b', padding: '10px', borderRadius: '8px', border: '2px solid #fbbf24', height: '80px', width: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: 'white', fontSize: '10px', textAlign: 'center', fontWeight: 'bold' }}>JAYA RAYA</span>
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+            {/* Logos */}
+            <div style={{ display: 'flex', gap: '15px' }}>
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Jaya_Raya_DKI_Jakarta.svg/512px-Jaya_Raya_DKI_Jakarta.svg.png" alt="Pemprov DKI" style={{ height: '70px', objectFit: 'contain' }} />
+              <img src="/logo-ragunan.png" alt="Ragunan" style={{ height: '70px', objectFit: 'contain' }} />
             </div>
             <div>
               <h1 className="header-title">DATA PENGUNJUNG</h1>

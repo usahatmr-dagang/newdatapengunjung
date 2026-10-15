@@ -1,0 +1,871 @@
+{
+  "date": "2026-10-15",
+  "siang": {
+    "last_run": "2026-10-15T07:03:19.186898",
+    "rekap": {
+      "total_pengunjung": 1248,
+      "motor": 0,
+      "mobil": 0,
+      "bus": 0,
+      "sepeda": 0,
+      "pps": 3744,
+      "tsa": 1248,
+      "update_str": "Kamis, 15 Oktober 2026 pukul 07:00 WIB",
+      "tanggal_str": "Kamis, Oktober 15, 2026",
+      "jam_str": "07:00:00",
+      "anak": 1248,
+      "dewasa": 0,
+      "bus_gol_1": 0,
+      "bus_gol_2": 0
+    },
+    "tickets_3a_visit": [
+      {
+        "item": "Item",
+        "kategori": "Kategori",
+        "qty": 0,
+        "total": 0
+      },
+      {
+        "item": "Taman Margasatwa Ragunan",
+        "kategori": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM",
+        "qty": 0,
+        "total": 413
+      },
+      {
+        "item": "Taman Margasatwa Ragunan",
+        "kategori": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM",
+        "qty": 1248,
+        "total": 49
+      },
+      {
+        "item": "Taman Margasatwa Ragunan",
+        "kategori": "MPOS, Pintu Barat - Gate Difabel, Pintu Barat - TVM, Pintu Utara - Gate Difabel, Pintu Utara - TVM",
+        "qty": 0,
+        "total": 0
+      },
+      {
+        "item": "Taman Margasatwa Ragunan",
+        "kategori": "MPOS, Pusat Primata Schmutzer",
+        "qty": 3744,
+        "total": 68
+      },
+      {
+        "item": "Taman Margasatwa Ragunan",
+        "kategori": "MPOS, Taman Satwa Anak",
+        "qty": 1248,
+        "total": 73
+      },
+      {
+        "item": "Taman Margasatwa Ragunan",
+        "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+        "qty": 0,
+        "total": 43
+      }
+    ],
+    "tickets_3a_by_channel_visit": {
+      "GATE": [
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 26
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM",
+          "qty": 312,
+          "total": 1
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pintu Barat - Gate Difabel, Pintu Barat - TVM, Pintu Utara - Gate Difabel, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Taman Satwa Anak",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Taman Satwa Anak",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        }
+      ],
+      "TVM": [
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 9
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pintu Barat - Gate Difabel, Pintu Barat - TVM, Pintu Utara - Gate Difabel, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Taman Satwa Anak",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Taman Satwa Anak",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        }
+      ],
+      "MERCHANT_PAGE": [
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 378
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM",
+          "qty": 312,
+          "total": 48
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pintu Barat - Gate Difabel, Pintu Barat - TVM, Pintu Utara - Gate Difabel, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 0,
+          "total": 45
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 312,
+          "total": 23
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Taman Satwa Anak",
+          "qty": 0,
+          "total": 40
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Taman Satwa Anak",
+          "qty": 312,
+          "total": 33
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 2
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 13
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 28
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        }
+      ],
+      "MPOS": [
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pintu Barat - Gate Difabel, Pintu Barat - TVM, Pintu Utara - Gate Difabel, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Pusat Primata Schmutzer",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Taman Satwa Anak",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "MPOS, Taman Satwa Anak",
+          "qty": 312,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        },
+        {
+          "item": "Taman Margasatwa Ragunan",
+          "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+          "qty": 0,
+          "total": 0
+        }
+      ]
+    },
+    "iwm": [],
+    "history": [
+      {
+        "timestamp": "2026-10-15T07:00:00",
+        "jam": "07:00",
+        "total_pengunjung": 1248,
+        "anak": 1248,
+        "dewasa": 0,
+        "pps": 3744,
+        "tsa": 1248,
+        "motor": 0,
+        "mobil": 0,
+        "bus": 0,
+        "sepeda": 0,
+        "tickets_3a_by_channel_visit": {
+          "GATE": [
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 26
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM",
+              "qty": 312,
+              "total": 1
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pintu Barat - Gate Difabel, Pintu Barat - TVM, Pintu Utara - Gate Difabel, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Taman Satwa Anak",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Taman Satwa Anak",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            }
+          ],
+          "TVM": [
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 9
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pintu Barat - Gate Difabel, Pintu Barat - TVM, Pintu Utara - Gate Difabel, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Taman Satwa Anak",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Taman Satwa Anak",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            }
+          ],
+          "MERCHANT_PAGE": [
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 378
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM",
+              "qty": 312,
+              "total": 48
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pintu Barat - Gate Difabel, Pintu Barat - TVM, Pintu Utara - Gate Difabel, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 0,
+              "total": 45
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 312,
+              "total": 23
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Taman Satwa Anak",
+              "qty": 0,
+              "total": 40
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Taman Satwa Anak",
+              "qty": 312,
+              "total": 33
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 2
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 13
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 28
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            }
+          ],
+          "MPOS": [
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pintu Barat - Gate Difabel, Pintu Barat - TVM, Pintu Utara - Gate Difabel, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Pusat Primata Schmutzer",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Taman Satwa Anak",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "MPOS, Taman Satwa Anak",
+              "qty": 312,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM",
+              "qty": 0,
+              "total": 0
+            }
+          ]
+        },
+        "iwm": []
+      }
+    ]
+  }
+}

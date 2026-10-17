@@ -47,7 +47,8 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({ data }) => {
   // Filters
   const filteredTickets = allTickets.filter(t => 
     t.item?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.kategori?.toLowerCase().includes(searchTerm.toLowerCase())
+    t.kategori?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (t.lokasi && t.lokasi.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const filteredIWM = allIWM.filter(i => 
@@ -126,6 +127,7 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({ data }) => {
                 <tr>
                   <th>Shift</th>
                   <th>Nama Item / Tiket</th>
+                  <th>Lokasi</th>
                   <th>Kategori</th>
                   <th style={{ textAlign: 'right' }}>Qty</th>
                   <th style={{ textAlign: 'right' }}>Total Pembayaran</th>
@@ -139,6 +141,9 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({ data }) => {
                         <span className={`badge badge-${t.shift}`}>{t.shift}</span>
                       </td>
                       <td style={{ fontWeight: 500 }}>{t.item}</td>
+                      <td style={{ fontSize: '0.85rem', color: t.lokasi ? '#93c5fd' : 'var(--text-muted)' }}>
+                        {t.lokasi || '-'}
+                      </td>
                       <td>{t.kategori}</td>
                       <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatNumber(t.qty)}</td>
                       <td style={{ textAlign: 'right', color: '#10b981', fontWeight: 600 }}>{formatIDR(t.total)}</td>
@@ -146,7 +151,7 @@ export const DataExplorer: React.FC<DataExplorerProps> = ({ data }) => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px' }}>
+                    <td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px' }}>
                       Tidak ada data tiket yang cocok.
                     </td>
                   </tr>

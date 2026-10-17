@@ -48,6 +48,137 @@ def clean_number(text: str) -> int:
     return int(re.sub(r"[^\d]", "", text)) if re.search(r"\d", text) else 0
 
 # ==========================================
+# DETEKSI KOLOM DINAMIS & PEMETAAN STSU (UPDATE V1.6)
+# ==========================================
+def cari_indeks_kolom_tiket(thead):
+    """
+    Mendeteksi posisi kolom 'Ticket', 'Total Ticket' (Qty), dan 'Total Nominal' secara dinamis.
+    Semua kolom di sebelah kiri 'Ticket' dianggap sebagai kolom informasi/sumber (Merchant, Location, dll).
+    """
+    idx_ticket = None
+    idx_qty = None
+    idx_nominal = None
+
+    for i, h in enumerate(thead):
+        h_clean = h.strip().upper()
+        if h_clean in ["TICKET", "TICKET NAME", "NAMA TIKET", "TIKET"]:
+            idx_ticket = i
+        elif ("TOTAL" in h_clean and "TICKET" in h_clean) or "QTY" in h_clean or "JUMLAH TIKET" in h_clean:
+            idx_qty = i
+        elif "NOMINAL" in h_clean or "AMOUNT" in h_clean or h_clean == "TOTAL":
+            idx_nominal = i
+
+    if idx_ticket is None or idx_qty is None or idx_nominal is None:
+        print(f"⚠️ [PERINGATAN 3A] Ada perubahan nama header tabel: {thead}")
+        if len(thead) >= 3:
+            if idx_nominal is None: idx_nominal = len(thead) - 1
+            if idx_qty is None: idx_qty = len(thead) - 2
+            if idx_ticket is None: idx_ticket = len(thead) - 3
+            print(f"   -> Menggunakan deteksi posisi otomatis: Kolom Ticket={idx_ticket}, Qty={idx_qty}, Nominal={idx_nominal}")
+        else:
+            return [], 0, 1, 2
+
+    left_indices = [i for i in range(len(thead)) if i < idx_ticket and i not in (idx_qty, idx_nominal)]
+    return left_indices, idx_ticket, idx_qty, idx_nominal
+
+
+def petakan_ke_stsu(data_tiket, tanggal_rekon_str):
+    stsu = {str(i): {"qty": 0, "nominal": 0} for i in range(1, 22)}
+    try:
+        tgl = datetime.strptime(tanggal_rekon_str, "%Y-%m-%d")
+        is_weekend = tgl.weekday() >= 5
+    except:
+        is_weekend = False
+
+    for item in data_tiket:
+        info_kiri = str(item.get('left_info', '')).upper()
+        tiket = str(item.get('ticket_name', '')).upper()
+        qty = int(item.get('qty', 0))
+        nominal = int(item.get('nominal', 0))
+        gabungan = info_kiri + " " + tiket
+
+        # 1. KENDARAAN / PARKIR
+        if "KENDARAAN" in gabungan or "PARKIR" in gabungan or "MOTOR" in tiket or "MOBIL" in tiket or "BUS" in tiket or "SEPEDA" in tiket:
+            idx = 0
+            if re.search(r'\bGOL(?:ONGAN)?\s*III\b', tiket):
+                idx = 19
+            elif re.search(r'\bGOL(?:ONGAN)?\s*II\b', tiket):
+                idx = 18
+            elif re.search(r'\bGOL(?:ONGAN)?\s*I\b', tiket):
+                idx = 17
+            elif "BUS BESAR" in tiket or "TRUK BESAR" in tiket or "TRUCK BESAR" in tiket:
+                idx = 17
+            elif "BUS KECIL" in tiket or "TRUK KECIL" in tiket or "TRUCK KECIL" in tiket or "PICK UP BESAR" in tiket:
+                idx = 18
+            elif "MOBIL" in tiket or "MINIBUS" in tiket or "MINI BUS" in tiket or "SEDAN" in tiket or "PICK UP KECIL" in tiket:
+                idx = 19
+            elif "MOTOR" in tiket or "RODA TIGA" in tiket:
+                idx = 20
+            elif "SEPEDA" in tiket and "MOTOR" not in tiket:
+                idx = 21
+            
+            if idx > 0:
+                stsu[str(idx)]["qty"] += qty
+                stsu[str(idx)]["nominal"] += nominal
+            continue 
+
+        # 2. WAHANA (Kuda, Unta, Gajah, TSA)
+        idx = 0
+        if "KUDA" in gabungan: idx = 5
+        elif "UNTA" in gabungan: idx = 6
+        elif "GAJAH" in gabungan: idx = 7
+        elif "TAMAN SATWA ANAK" in gabungan or "TSA" in gabungan: idx = 8
+        
+        if idx > 0:
+            stsu[str(idx)]["qty"] += qty
+            stsu[str(idx)]["nominal"] += nominal
+            continue
+
+        # 3. PUSAT PRIMATA SCHMUTZER
+        if "PRIMATA" in gabungan or "SCHMUTZER" in gabungan:
+            is_holiday = any(k in tiket for k in ["WEEKEND", "HOLIDAY", "LIBUR"])
+            is_weekday = "WEEKDAY" in tiket
+
+            if is_holiday:
+                libur = True
+            elif is_weekday:
+                libur = False
+            else:
+                libur = is_weekend
+                
+            idx = 0
+            if "ROMBONGAN" in tiket or "REDUKSI" in tiket:
+                if "DEWASA" in tiket: 
+                    idx = 16 if libur else 11
+                elif "ANAK" in tiket: 
+                    idx = 15 if libur else 12
+            else:
+                if "DEWASA" in tiket: 
+                    idx = 13 if libur else 9
+                elif "ANAK" in tiket: 
+                    idx = 14 if libur else 10
+            
+            if idx > 0:
+                stsu[str(idx)]["qty"] += qty
+                stsu[str(idx)]["nominal"] += nominal
+            continue
+
+        # 4. TIKET MASUK TMR PENGUNJUNG REGULER
+        idx = 0
+        if "ROMBONGAN" in tiket or "REDUKSI" in tiket:
+            if "DEWASA" in tiket: idx = 3
+            elif "ANAK" in tiket: idx = 4
+        else:
+            if "DEWASA" in tiket: idx = 1
+            elif "ANAK" in tiket: idx = 2
+            
+        if idx > 0:
+            stsu[str(idx)]["qty"] += qty
+            stsu[str(idx)]["nominal"] += nominal
+
+    return stsu
+
+# ==========================================
 # 2. FUNGSI EKSTRAK DATA
 # ==========================================
 def tarik_data_3a(driver, wait, target_date_str, query_by='paid', mode='full'):
@@ -79,6 +210,7 @@ def tarik_data_3a(driver, wait, target_date_str, query_by='paid', mode='full'):
     else:
         channels = ["GATE", "TVM", "MERCHANT_PAGE", "MPOS"]
     hasil_channels = {}
+    hasil_stsu_channels = {}
     
     def datatable_done(_drv):
         try:
@@ -117,17 +249,52 @@ def tarik_data_3a(driver, wait, target_date_str, query_by='paid', mode='full'):
         driver.execute_script("let t = document.getElementById('toggleZero'); if(t && !t.checked) t.click();")
         time.sleep(1.5)
         
-        rows = driver.execute_script("""
-            return Array.from(document.querySelectorAll('#summary-ticket-table tbody tr'))
-                        .map(tr => Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim()));
+        raw_table_data = driver.execute_script("""
+            let table = document.querySelector('#summary-ticket-table');
+            if (!table) return { 'thead': [], 'tbody': [] };
+            
+            let thead = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+            let tbody = Array.from(table.querySelectorAll('tbody tr'))
+                .filter(tr => window.getComputedStyle(tr).display !== 'none')
+                .map(tr => Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim()));
+            return { 'thead': thead, 'tbody': tbody };
         """)
+        
+        thead_list = raw_table_data.get('thead', [])
+        tbody_list = raw_table_data.get('tbody', [])
+        
+        left_indices, idx_ticket, idx_qty, idx_nominal = cari_indeks_kolom_tiket(thead_list)
+        min_cols_needed = max([idx_ticket, idx_qty, idx_nominal] + left_indices) + 1 if thead_list else 4
         
         now = target_visit.strftime("%Y-%m-%d %H:%M:%S")
         channel_data = []
-        for r in rows:
-            if len(r) >= 4 and r[0] and "Tidak ada data" not in r[0] and "TOTAL" not in r[0].upper():
-                channel_data.append([now, r[0], r[1], clean_number(r[2]), clean_number(r[3])])
+        raw_items_for_stsu = []
+        
+        for cols in tbody_list:
+            if len(cols) >= min_cols_needed:
+                first_col_text = cols[0] if cols else ""
+                if not first_col_text or "tidak ada data" in first_col_text.lower() or "total" in first_col_text.lower():
+                    continue
+                
+                left_info_str = " | ".join([cols[i] for i in left_indices if i < len(cols)])
+                merchant_str = cols[0] if len(cols) > 0 else ""
+                # Jika ada kolom lokasi (index 1 di antara left_indices)
+                location_str = cols[1] if len(left_indices) > 1 and len(cols) > 1 else ""
+                ticket_name_str = cols[idx_ticket]
+                qty_val = clean_number(cols[idx_qty])
+                nominal_val = clean_number(cols[idx_nominal])
+                
+                if qty_val > 0 or nominal_val > 0:
+                    channel_data.append([now, merchant_str, ticket_name_str, qty_val, nominal_val, location_str])
+                    raw_items_for_stsu.append({
+                        "left_info": left_info_str,
+                        "ticket_name": ticket_name_str,
+                        "qty": qty_val,
+                        "nominal": nominal_val
+                    })
+                    
         hasil_channels[channel] = channel_data
+        hasil_stsu_channels[channel] = petakan_ke_stsu(raw_items_for_stsu, target_date_str)
         print(f"✅ [3A] Channel {channel}: Berhasil tarik {len(channel_data)} data.")
     
     # Agregasikan data dari seluruh channel
@@ -136,18 +303,24 @@ def tarik_data_3a(driver, wait, target_date_str, query_by='paid', mode='full'):
         for r in items:
             key = (r[1], r[2]) # (Item/Merchant, Kategori/TicketName)
             if key not in aggregated:
-                aggregated[key] = {"qty": 0, "total": 0, "timestamp": r[0]}
+                aggregated[key] = {"qty": 0, "total": 0, "timestamp": r[0], "lokasi": set()}
             aggregated[key]["qty"] += r[3]
             aggregated[key]["total"] += r[4]
+            if len(r) > 5 and r[5]:
+                for loc_part in r[5].split(','):
+                    loc_clean = loc_part.strip()
+                    if loc_clean:
+                        aggregated[key]["lokasi"].add(loc_clean)
             
-    header = ["Timestamp", "Item", "Kategori", "Qty", "Total"]
+    header = ["Timestamp", "Item", "Kategori", "Qty", "Total", "Lokasi"]
     data_3a_aggregated = [header]
     
     for (item_name, kategori), val in aggregated.items():
-        data_3a_aggregated.append([val["timestamp"], item_name, kategori, val["qty"], val["total"]])
+        lokasi_str = ", ".join(sorted(val["lokasi"]))
+        data_3a_aggregated.append([val["timestamp"], item_name, kategori, val["qty"], val["total"], lokasi_str])
         
     print(f"✅ [3A] Agregasi Selesai. Total {len(data_3a_aggregated)-1} jenis tiket teragregasi.")
-    return data_3a_aggregated, hasil_channels
+    return data_3a_aggregated, hasil_channels, hasil_stsu_channels
 
 def tarik_data_iwm_full(driver, wait, tanggal_target, mode='full'):
     print("\n🚀 [IWM] Membuka IWM...")
@@ -270,7 +443,8 @@ def hitung_rekap_siang(data_3a_channels, data_iwm, target_date_str=None):
     
     for ch, items in data_3a_channels.items():
         for r in items:
-            kategori = r[1].upper() + " " + r[2].upper()
+            kategori = (str(r[1]) + " " + str(r[2]) + " " + (str(r[5]) if len(r) > 5 else "")).upper()
+            tiket = str(r[2]).upper()
             qty = r[3]
             
             # Accumulate PPS (Pusat Primata Schmutzer) tickets from 3A
@@ -283,35 +457,30 @@ def hitung_rekap_siang(data_3a_channels, data_iwm, target_date_str=None):
                 online_tsa += qty
                 continue
                 
+            # Kendaraan 3A (Cek III -> II -> I agar tidak tumpang tindih)
+            if "KENDARAAN" in kategori or "PARKIR" in kategori or "MOTOR" in tiket or "MOBIL" in tiket or "BUS" in tiket or "SEPEDA" in tiket:
+                if re.search(r'\bGOL(?:ONGAN)?\s*III\b', tiket):
+                    online_mobil += qty
+                elif re.search(r'\bGOL(?:ONGAN)?\s*II\b', tiket):
+                    online_bus_gol_2 += qty
+                elif re.search(r'\bGOL(?:ONGAN)?\s*I\b', tiket):
+                    online_bus_gol_1 += qty
+                elif "BUS BESAR" in tiket or "TRUK BESAR" in tiket or "TRUCK BESAR" in tiket:
+                    online_bus_gol_1 += qty
+                elif "BUS KECIL" in tiket or "TRUK KECIL" in tiket or "TRUCK KECIL" in tiket or "PICK UP BESAR" in tiket:
+                    online_bus_gol_2 += qty
+                elif "MOBIL" in tiket or "MINIBUS" in tiket or "MINI BUS" in tiket or "SEDAN" in tiket or "PICK UP KECIL" in tiket:
+                    online_mobil += qty
+                elif "MOTOR" in tiket or "RODA TIGA" in tiket:
+                    online_motor += qty
+                elif "SEPEDA" in tiket and "MOTOR" not in tiket:
+                    online_sepeda += qty
+                continue
+
             if "DEWASA" in kategori:
                 online_dewasa += qty
             elif "ANAK" in kategori:
                 online_anak += qty
-            # Kendaraan 3A menggunakan format: "Kendaraan Gol I", "Gol II", "Gol III"
-            # Gol I  = Bus besar, truk besar, mobil box besar
-            # Gol II = Bus kecil, truk kecil, mobil box kecil, pick up besar
-            # Gol III = Mobil sedan, mini bus/sejenis, pick up kecil
-            elif "GOL I" in kategori and "GOL II" not in kategori and "GOL III" not in kategori:
-                online_bus_gol_1 += qty
-            elif "GOL II" in kategori and "GOL III" not in kategori:
-                online_bus_gol_2 += qty
-            elif "GOL III" in kategori or "MOBIL SEDAN" in kategori or "MINI BUS" in kategori:
-                online_mobil += qty
-            elif "SEPEDA MOTOR" in kategori or ("MOTOR" in kategori and "GOL" not in kategori):
-                online_motor += qty
-            elif "SEPEDA" in kategori and "MOTOR" not in kategori:
-                online_sepeda += qty
-            # Fallback for older/alternative formats
-            elif "BUS BESAR" in kategori or "TRUK BESAR" in kategori:
-                online_bus_gol_1 += qty
-            elif "BUS KECIL" in kategori or "TRUK KECIL" in kategori or "PICK UP BESAR" in kategori:
-                online_bus_gol_2 += qty
-            elif "MOBIL" in kategori:
-                online_mobil += qty
-            elif "MOTOR" in kategori:
-                online_motor += qty
-            elif "SEPEDA" in kategori:
-                online_sepeda += qty
                 
     iwm_anak = 0
     iwm_dewasa = 0
@@ -555,7 +724,7 @@ def main():
 
         # EKSTRAKSI
         # 1. Query by visit date (Data Pengunjung)
-        data_3a_visit, data_3a_channels_visit = tarik_data_3a(driver, wait, str_v, query_by='visit', mode=mode)
+        data_3a_visit, data_3a_channels_visit, stsu_channels_visit = tarik_data_3a(driver, wait, str_v, query_by='visit', mode=mode)
             
         # 2. Pull IWM Quantity
         try:
@@ -590,12 +759,14 @@ def main():
         tickets_3a_list_visit = []
         if data_3a_visit:
             for r in data_3a_visit:
-                if len(r) >= 5:
+                # Lewati baris header jika ada
+                if len(r) >= 5 and str(r[0]).upper() != "TIMESTAMP" and str(r[1]).upper() != "ITEM":
                     tickets_3a_list_visit.append({
                         "item": r[1],
                         "kategori": r[2],
                         "qty": clean_number(str(r[3])),
-                        "total": clean_number(str(r[4]))
+                        "total": clean_number(str(r[4])),
+                        "lokasi": r[5] if len(r) > 5 else ""
                     })
         
         tickets_3a_by_channel_visit = {}
@@ -608,7 +779,8 @@ def main():
                             "item": r[1],
                             "kategori": r[2],
                             "qty": clean_number(str(r[3])),
-                            "total": clean_number(str(r[4]))
+                            "total": clean_number(str(r[4])),
+                            "lokasi": r[5] if len(r) > 5 else ""
                         })
                 tickets_3a_by_channel_visit[ch] = ch_list
 
@@ -702,6 +874,7 @@ def main():
         payload = {
             "last_run": datetime.now().isoformat(),
             "rekap": rekap_visit,
+            "stsu": stsu_channels_visit,
             "tickets_3a_visit": tickets_3a_list_visit,
             "tickets_3a_by_channel_visit": tickets_3a_by_channel_visit,
             "iwm": iwm_list,

@@ -240,7 +240,7 @@ export const DashboardPengunjung: React.FC<DashboardPengunjungProps> = ({ data }
     if (r.siang && r.malam && r.siang.last_run === r.malam.last_run) return [];
     
     return malamT.map(mItem => {
-      const sItem = siangT.find(s => s.item === mItem.item);
+      const sItem = siangT.find(s => (s.kategori || s.item) === (mItem.kategori || mItem.item));
       if (!sItem) return mItem;
       return { ...mItem, qty: Math.max(0, (mItem.qty || 0) - (sItem.qty || 0)) };
     });
@@ -253,7 +253,7 @@ export const DashboardPengunjung: React.FC<DashboardPengunjungProps> = ({ data }
     filteredRecords.forEach(r => {
       const tickets = getTicketsByChannel(r, channel);
       tickets.forEach(t => {
-        const kat = ((t.item || '') + ' ' + (t.kategori || '')).toUpperCase();
+        const kat = ((t.item || '') + ' ' + (t.kategori || '') + ' ' + (t.lokasi || '')).toUpperCase();
         const qty = t.qty || 0;
         
         if (kat.includes("PUSAT PRIMATA") || kat.includes("SCHMUTZER")) {

@@ -3,6 +3,7 @@ export interface Ticket3A {
   kategori: string;
   qty: number;
   total: number;
+  lokasi?: string;
 }
 
 export interface IWMRecord {

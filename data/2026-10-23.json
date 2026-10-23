@@ -1,11 +1,11 @@
 {
   "date": "2026-10-23",
   "siang": {
-    "last_run": "2026-10-23T12:47:28.980309",
+    "last_run": "2026-10-23T12:52:06.813334",
     "rekap": {
-      "total_pengunjung": 2356,
+      "total_pengunjung": 2368,
       "motor": 308,
-      "mobil": 251,
+      "mobil": 252,
       "bus": 7,
       "sepeda": 26,
       "pps": 236,
@@ -13,16 +13,16 @@
       "update_str": "Jumat, 23 Oktober 2026 pukul 12:45 WIB",
       "tanggal_str": "Jumat, Oktober 23, 2026",
       "jam_str": "12:45:00",
-      "anak": 383,
-      "dewasa": 1973,
+      "anak": 384,
+      "dewasa": 1984,
       "bus_gol_1": 5,
       "bus_gol_2": 2
     },
     "stsu": {
       "GATE": {
         "1": {
-          "qty": 784,
-          "nominal": 3136000
+          "qty": 785,
+          "nominal": 3140000
         },
         "2": {
           "qty": 107,
@@ -368,8 +368,8 @@
       {
         "item": "Taman Margasatwa Ragunan",
         "kategori": "Tiket Dewasa",
-        "qty": 1451,
-        "total": 5804000,
+        "qty": 1452,
+        "total": 5808000,
         "lokasi": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM"
       },
       {
@@ -434,8 +434,8 @@
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Tiket Dewasa",
-          "qty": 784,
-          "total": 3136000,
+          "qty": 785,
+          "total": 3140000,
           "lokasi": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM"
         },
         {
@@ -654,13 +654,13 @@
       {
         "lokasi": "Pintu Barat",
         "karcis_anak": 10,
-        "karcis_dewasa": 44,
+        "karcis_dewasa": 52,
         "parkir_gol_1": 0,
         "parkir_gol_2": 0,
         "parkir_gol_3": 0,
         "parkir_motor": 0,
         "parkir_sepeda": 10,
-        "total": 64
+        "total": 72
       },
       {
         "lokasi": "Pintu Barat Kendaraan",
@@ -723,21 +723,21 @@
         "karcis_dewasa": 118,
         "parkir_gol_1": 5,
         "parkir_gol_2": 2,
-        "parkir_gol_3": 157,
+        "parkir_gol_3": 158,
         "parkir_motor": 167,
         "parkir_sepeda": 0,
-        "total": 483
+        "total": 484
       },
       {
         "lokasi": "Pintu Utara 3",
-        "karcis_anak": 156,
-        "karcis_dewasa": 344,
+        "karcis_anak": 157,
+        "karcis_dewasa": 346,
         "parkir_gol_1": 0,
         "parkir_gol_2": 0,
         "parkir_gol_3": 3,
         "parkir_motor": 3,
         "parkir_sepeda": 4,
-        "total": 510
+        "total": 513
       },
       {
         "lokasi": "Pintu Utara Motor",
@@ -6755,13 +6755,13 @@
       {
         "timestamp": "2026-10-23T12:45:00",
         "jam": "12:45",
-        "total_pengunjung": 2356,
-        "anak": 383,
-        "dewasa": 1973,
+        "total_pengunjung": 2368,
+        "anak": 384,
+        "dewasa": 1984,
         "pps": 236,
         "tsa": 301,
         "motor": 308,
-        "mobil": 251,
+        "mobil": 252,
         "bus": 7,
         "sepeda": 26,
         "tickets_3a_by_channel_visit": {
@@ -6769,8 +6769,8 @@
             {
               "item": "Taman Margasatwa Ragunan",
               "kategori": "Tiket Dewasa",
-              "qty": 784,
-              "total": 3136000,
+              "qty": 785,
+              "total": 3140000,
               "lokasi": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM"
             },
             {
@@ -6989,13 +6989,13 @@
           {
             "lokasi": "Pintu Barat",
             "karcis_anak": 10,
-            "karcis_dewasa": 44,
+            "karcis_dewasa": 52,
             "parkir_gol_1": 0,
             "parkir_gol_2": 0,
             "parkir_gol_3": 0,
             "parkir_motor": 0,
             "parkir_sepeda": 10,
-            "total": 64
+            "total": 72
           },
           {
             "lokasi": "Pintu Barat Kendaraan",
@@ -7058,21 +7058,21 @@
             "karcis_dewasa": 118,
             "parkir_gol_1": 5,
             "parkir_gol_2": 2,
-            "parkir_gol_3": 157,
+            "parkir_gol_3": 158,
             "parkir_motor": 167,
             "parkir_sepeda": 0,
-            "total": 483
+            "total": 484
           },
           {
             "lokasi": "Pintu Utara 3",
-            "karcis_anak": 156,
-            "karcis_dewasa": 344,
+            "karcis_anak": 157,
+            "karcis_dewasa": 346,
             "parkir_gol_1": 0,
             "parkir_gol_2": 0,
             "parkir_gol_3": 3,
             "parkir_motor": 3,
             "parkir_sepeda": 4,
-            "total": 510
+            "total": 513
           },
           {
             "lokasi": "Pintu Utara Motor",

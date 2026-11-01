@@ -1,32 +1,32 @@
 {
   "date": "2026-11-01",
   "siang": {
-    "last_run": "2026-11-01T08:32:13.098975",
+    "last_run": "2026-11-01T08:47:21.603318",
     "rekap": {
-      "total_pengunjung": 10887,
-      "motor": 1628,
-      "mobil": 941,
-      "bus": 23,
-      "sepeda": 262,
-      "pps": 718,
-      "tsa": 621,
-      "update_str": "Minggu, 01 November 2026 pukul 08:30 WIB",
+      "total_pengunjung": 12132,
+      "motor": 1779,
+      "mobil": 1017,
+      "bus": 26,
+      "sepeda": 274,
+      "pps": 763,
+      "tsa": 676,
+      "update_str": "Minggu, 01 November 2026 pukul 08:45 WIB",
       "tanggal_str": "Minggu, November 01, 2026",
-      "jam_str": "08:30:00",
-      "anak": 2046,
-      "dewasa": 8841,
-      "bus_gol_1": 14,
+      "jam_str": "08:45:00",
+      "anak": 2355,
+      "dewasa": 9777,
+      "bus_gol_1": 17,
       "bus_gol_2": 9
     },
     "stsu": {
       "GATE": {
         "1": {
-          "qty": 1764,
-          "nominal": 7056000
+          "qty": 1905,
+          "nominal": 7620000
         },
         "2": {
-          "qty": 399,
-          "nominal": 1197000
+          "qty": 448,
+          "nominal": 1344000
         },
         "3": {
           "qty": 0,
@@ -49,8 +49,8 @@
           "nominal": 0
         },
         "8": {
-          "qty": 47,
-          "nominal": 117500
+          "qty": 53,
+          "nominal": 132500
         },
         "9": {
           "qty": 0,
@@ -107,12 +107,12 @@
       },
       "TVM": {
         "1": {
-          "qty": 548,
-          "nominal": 2192000
+          "qty": 617,
+          "nominal": 2468000
         },
         "2": {
-          "qty": 54,
-          "nominal": 162000
+          "qty": 60,
+          "nominal": 180000
         },
         "3": {
           "qty": 0,
@@ -135,8 +135,8 @@
           "nominal": 0
         },
         "8": {
-          "qty": 29,
-          "nominal": 72500
+          "qty": 51,
+          "nominal": 127500
         },
         "9": {
           "qty": 0,
@@ -155,12 +155,12 @@
           "nominal": 0
         },
         "13": {
-          "qty": 56,
-          "nominal": 420000
+          "qty": 65,
+          "nominal": 487500
         },
         "14": {
-          "qty": 6,
-          "nominal": 45000
+          "qty": 10,
+          "nominal": 75000
         },
         "15": {
           "qty": 0,
@@ -183,22 +183,22 @@
           "nominal": 36000
         },
         "20": {
-          "qty": 18,
-          "nominal": 54000
+          "qty": 19,
+          "nominal": 57000
         },
         "21": {
-          "qty": 62,
-          "nominal": 62000
+          "qty": 66,
+          "nominal": 66000
         }
       },
       "MERCHANT_PAGE": {
         "1": {
-          "qty": 2944,
-          "nominal": 11776000
+          "qty": 3104,
+          "nominal": 12416000
         },
         "2": {
-          "qty": 635,
-          "nominal": 1905000
+          "qty": 665,
+          "nominal": 1995000
         },
         "3": {
           "qty": 0,
@@ -221,8 +221,8 @@
           "nominal": 0
         },
         "8": {
-          "qty": 375,
-          "nominal": 937500
+          "qty": 387,
+          "nominal": 967500
         },
         "9": {
           "qty": 0,
@@ -241,12 +241,12 @@
           "nominal": 0
         },
         "13": {
-          "qty": 546,
-          "nominal": 4095000
+          "qty": 574,
+          "nominal": 4305000
         },
         "14": {
-          "qty": 110,
-          "nominal": 825000
+          "qty": 114,
+          "nominal": 855000
         },
         "15": {
           "qty": 0,
@@ -265,16 +265,16 @@
           "nominal": 100000
         },
         "19": {
-          "qty": 229,
-          "nominal": 1374000
+          "qty": 240,
+          "nominal": 1440000
         },
         "20": {
-          "qty": 555,
-          "nominal": 1665000
+          "qty": 595,
+          "nominal": 1785000
         },
         "21": {
-          "qty": 36,
-          "nominal": 36000
+          "qty": 40,
+          "nominal": 40000
         }
       },
       "MPOS": {
@@ -368,64 +368,64 @@
       {
         "item": "Taman Margasatwa Ragunan",
         "kategori": "Tiket Dewasa",
-        "qty": 5256,
-        "total": 21024000,
+        "qty": 5626,
+        "total": 22504000,
         "lokasi": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM"
       },
       {
         "item": "Taman Margasatwa Ragunan",
         "kategori": "Tiket Anak (Usia 3-12 tahun)",
-        "qty": 1088,
-        "total": 3264000,
+        "qty": 1173,
+        "total": 3519000,
         "lokasi": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM"
       },
       {
         "item": "Taman Margasatwa Ragunan",
         "kategori": "Taman Satwa Anak (Dewasa)",
-        "qty": 313,
-        "total": 782500,
+        "qty": 341,
+        "total": 852500,
         "lokasi": "MPOS, Taman Satwa Anak"
       },
       {
         "item": "Taman Margasatwa Ragunan",
         "kategori": "Taman Satwa Anak (Anak Usia 3-12 tahun)",
-        "qty": 138,
-        "total": 345000,
+        "qty": 150,
+        "total": 375000,
         "lokasi": "MPOS, Taman Satwa Anak"
       },
       {
         "item": "Taman Margasatwa Ragunan",
         "kategori": "Pusat Primata Schmutzer (Dewasa) - Weekend",
-        "qty": 602,
-        "total": 4515000,
+        "qty": 639,
+        "total": 4792500,
         "lokasi": "MPOS, Pusat Primata Schmutzer"
       },
       {
         "item": "Taman Margasatwa Ragunan",
         "kategori": "Pusat Primata Schmutzer (Anak Usia 3-12 tahun) - Weekend",
-        "qty": 116,
-        "total": 870000,
+        "qty": 124,
+        "total": 930000,
         "lokasi": "MPOS, Pusat Primata Schmutzer"
       },
       {
         "item": "Taman Margasatwa Ragunan",
         "kategori": "Kendaraan Gol III (mobil sedan, mini bus/sejenis, pick up kecil)",
-        "qty": 235,
-        "total": 1410000,
+        "qty": 246,
+        "total": 1476000,
         "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
       },
       {
         "item": "Taman Margasatwa Ragunan",
         "kategori": "Sepeda Motor dan kendaraan Roda Tiga",
-        "qty": 573,
-        "total": 1719000,
+        "qty": 614,
+        "total": 1842000,
         "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
       },
       {
         "item": "Taman Margasatwa Ragunan",
         "kategori": "Sepeda",
-        "qty": 98,
-        "total": 98000,
+        "qty": 106,
+        "total": 106000,
         "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
       },
       {
@@ -448,29 +448,29 @@
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Tiket Dewasa",
-          "qty": 1764,
-          "total": 7056000,
+          "qty": 1905,
+          "total": 7620000,
           "lokasi": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Tiket Anak (Usia 3-12 tahun)",
-          "qty": 399,
-          "total": 1197000,
+          "qty": 448,
+          "total": 1344000,
           "lokasi": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Taman Satwa Anak (Dewasa)",
-          "qty": 18,
-          "total": 45000,
+          "qty": 20,
+          "total": 50000,
           "lokasi": "MPOS, Taman Satwa Anak"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Taman Satwa Anak (Anak Usia 3-12 tahun)",
-          "qty": 29,
-          "total": 72500,
+          "qty": 33,
+          "total": 82500,
           "lokasi": "MPOS, Taman Satwa Anak"
         }
       ],
@@ -478,43 +478,43 @@
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Tiket Dewasa",
-          "qty": 548,
-          "total": 2192000,
+          "qty": 617,
+          "total": 2468000,
           "lokasi": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Tiket Anak (Usia 3-12 tahun)",
-          "qty": 54,
-          "total": 162000,
+          "qty": 60,
+          "total": 180000,
           "lokasi": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Pusat Primata Schmutzer (Dewasa) - Weekend",
-          "qty": 56,
-          "total": 420000,
+          "qty": 65,
+          "total": 487500,
           "lokasi": "MPOS, Pusat Primata Schmutzer"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Pusat Primata Schmutzer (Anak Usia 3-12 tahun) - Weekend",
-          "qty": 6,
-          "total": 45000,
+          "qty": 10,
+          "total": 75000,
           "lokasi": "MPOS, Pusat Primata Schmutzer"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Taman Satwa Anak (Dewasa)",
-          "qty": 23,
-          "total": 57500,
+          "qty": 40,
+          "total": 100000,
           "lokasi": "MPOS, Taman Satwa Anak"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Taman Satwa Anak (Anak Usia 3-12 tahun)",
-          "qty": 6,
-          "total": 15000,
+          "qty": 11,
+          "total": 27500,
           "lokasi": "MPOS, Taman Satwa Anak"
         },
         {
@@ -527,15 +527,15 @@
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Sepeda Motor dan kendaraan Roda Tiga",
-          "qty": 18,
-          "total": 54000,
+          "qty": 19,
+          "total": 57000,
           "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Sepeda",
-          "qty": 62,
-          "total": 62000,
+          "qty": 66,
+          "total": 66000,
           "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
         }
       ],
@@ -543,43 +543,43 @@
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Tiket Dewasa",
-          "qty": 2944,
-          "total": 11776000,
+          "qty": 3104,
+          "total": 12416000,
           "lokasi": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Tiket Anak (Usia 3-12 tahun)",
-          "qty": 635,
-          "total": 1905000,
+          "qty": 665,
+          "total": 1995000,
           "lokasi": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Pusat Primata Schmutzer (Dewasa) - Weekend",
-          "qty": 546,
-          "total": 4095000,
+          "qty": 574,
+          "total": 4305000,
           "lokasi": "MPOS, Pusat Primata Schmutzer"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Pusat Primata Schmutzer (Anak Usia 3-12 tahun) - Weekend",
-          "qty": 110,
-          "total": 825000,
+          "qty": 114,
+          "total": 855000,
           "lokasi": "MPOS, Pusat Primata Schmutzer"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Taman Satwa Anak (Dewasa)",
-          "qty": 272,
-          "total": 680000,
+          "qty": 281,
+          "total": 702500,
           "lokasi": "MPOS, Taman Satwa Anak"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Taman Satwa Anak (Anak Usia 3-12 tahun)",
-          "qty": 103,
-          "total": 257500,
+          "qty": 106,
+          "total": 265000,
           "lokasi": "MPOS, Taman Satwa Anak"
         },
         {
@@ -599,22 +599,22 @@
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Kendaraan Gol III (mobil sedan, mini bus/sejenis, pick up kecil)",
-          "qty": 229,
-          "total": 1374000,
+          "qty": 240,
+          "total": 1440000,
           "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Sepeda Motor dan kendaraan Roda Tiga",
-          "qty": 555,
-          "total": 1665000,
+          "qty": 595,
+          "total": 1785000,
           "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
         },
         {
           "item": "Taman Margasatwa Ragunan",
           "kategori": "Sepeda",
-          "qty": 36,
-          "total": 36000,
+          "qty": 40,
+          "total": 40000,
           "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
         }
       ],
@@ -623,14 +623,14 @@
     "iwm": [
       {
         "lokasi": "Children Zoo",
-        "karcis_anak": 12,
-        "karcis_dewasa": 158,
+        "karcis_anak": 16,
+        "karcis_dewasa": 169,
         "parkir_gol_1": 0,
         "parkir_gol_2": 0,
         "parkir_gol_3": 0,
         "parkir_motor": 0,
         "parkir_sepeda": 0,
-        "total": 170
+        "total": 185
       },
       {
         "lokasi": "Gajah Tunggang",
@@ -667,36 +667,36 @@
       },
       {
         "lokasi": "Pintu Barat",
-        "karcis_anak": 4,
-        "karcis_dewasa": 24,
+        "karcis_anak": 10,
+        "karcis_dewasa": 30,
         "parkir_gol_1": 0,
         "parkir_gol_2": 0,
         "parkir_gol_3": 0,
         "parkir_motor": 1,
-        "parkir_sepeda": 22,
-        "total": 51
+        "parkir_sepeda": 24,
+        "total": 65
       },
       {
         "lokasi": "Pintu Barat Kendaraan",
-        "karcis_anak": 230,
-        "karcis_dewasa": 1067,
+        "karcis_anak": 263,
+        "karcis_dewasa": 1158,
         "parkir_gol_1": 0,
         "parkir_gol_2": 0,
-        "parkir_gol_3": 184,
-        "parkir_motor": 329,
+        "parkir_gol_3": 196,
+        "parkir_motor": 357,
         "parkir_sepeda": 10,
-        "total": 1820
+        "total": 1984
       },
       {
         "lokasi": "Pintu MIAMI",
-        "karcis_anak": 176,
-        "karcis_dewasa": 440,
+        "karcis_anak": 252,
+        "karcis_dewasa": 610,
         "parkir_gol_1": 0,
         "parkir_gol_2": 0,
-        "parkir_gol_3": 127,
+        "parkir_gol_3": 179,
         "parkir_motor": 0,
         "parkir_sepeda": 7,
-        "total": 750
+        "total": 1048
       },
       {
         "lokasi": "Pintu Selatan",
@@ -733,36 +733,36 @@
       },
       {
         "lokasi": "Pintu Utara 2",
-        "karcis_anak": 7,
-        "karcis_dewasa": 35,
-        "parkir_gol_1": 11,
+        "karcis_anak": 14,
+        "karcis_dewasa": 66,
+        "parkir_gol_1": 14,
         "parkir_gol_2": 1,
-        "parkir_gol_3": 395,
+        "parkir_gol_3": 396,
         "parkir_motor": 0,
         "parkir_sepeda": 8,
-        "total": 457
+        "total": 499
       },
       {
         "lokasi": "Pintu Utara 3",
-        "karcis_anak": 259,
-        "karcis_dewasa": 624,
+        "karcis_anak": 296,
+        "karcis_dewasa": 715,
         "parkir_gol_1": 0,
         "parkir_gol_2": 0,
         "parkir_gol_3": 0,
         "parkir_motor": 1,
-        "parkir_sepeda": 96,
-        "total": 980
+        "parkir_sepeda": 98,
+        "total": 1110
       },
       {
         "lokasi": "Pintu Utara Motor",
-        "karcis_anak": 282,
-        "karcis_dewasa": 1395,
+        "karcis_anak": 347,
+        "karcis_dewasa": 1572,
         "parkir_gol_1": 0,
         "parkir_gol_2": 0,
         "parkir_gol_3": 0,
-        "parkir_motor": 724,
+        "parkir_motor": 806,
         "parkir_sepeda": 21,
-        "total": 2422
+        "total": 2746
       },
       {
         "lokasi": "Pusat Primata",
@@ -3143,6 +3143,363 @@
             "parkir_motor": 724,
             "parkir_sepeda": 21,
             "total": 2422
+          },
+          {
+            "lokasi": "Pusat Primata",
+            "karcis_anak": 0,
+            "karcis_dewasa": 0,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 0,
+            "parkir_motor": 0,
+            "parkir_sepeda": 0,
+            "total": 0
+          },
+          {
+            "lokasi": "Unta Tunggang",
+            "karcis_anak": 0,
+            "karcis_dewasa": 0,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 0,
+            "parkir_motor": 0,
+            "parkir_sepeda": 0,
+            "total": 0
+          }
+        ]
+      },
+      {
+        "timestamp": "2026-11-01T08:45:00",
+        "jam": "08:45",
+        "total_pengunjung": 12132,
+        "anak": 2355,
+        "dewasa": 9777,
+        "pps": 763,
+        "tsa": 676,
+        "motor": 1779,
+        "mobil": 1017,
+        "bus": 26,
+        "sepeda": 274,
+        "tickets_3a_by_channel_visit": {
+          "GATE": [
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Tiket Dewasa",
+              "qty": 1905,
+              "total": 7620000,
+              "lokasi": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Tiket Anak (Usia 3-12 tahun)",
+              "qty": 448,
+              "total": 1344000,
+              "lokasi": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Taman Satwa Anak (Dewasa)",
+              "qty": 20,
+              "total": 50000,
+              "lokasi": "MPOS, Taman Satwa Anak"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Taman Satwa Anak (Anak Usia 3-12 tahun)",
+              "qty": 33,
+              "total": 82500,
+              "lokasi": "MPOS, Taman Satwa Anak"
+            }
+          ],
+          "TVM": [
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Tiket Dewasa",
+              "qty": 617,
+              "total": 2468000,
+              "lokasi": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Tiket Anak (Usia 3-12 tahun)",
+              "qty": 60,
+              "total": 180000,
+              "lokasi": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Pusat Primata Schmutzer (Dewasa) - Weekend",
+              "qty": 65,
+              "total": 487500,
+              "lokasi": "MPOS, Pusat Primata Schmutzer"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Pusat Primata Schmutzer (Anak Usia 3-12 tahun) - Weekend",
+              "qty": 10,
+              "total": 75000,
+              "lokasi": "MPOS, Pusat Primata Schmutzer"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Taman Satwa Anak (Dewasa)",
+              "qty": 40,
+              "total": 100000,
+              "lokasi": "MPOS, Taman Satwa Anak"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Taman Satwa Anak (Anak Usia 3-12 tahun)",
+              "qty": 11,
+              "total": 27500,
+              "lokasi": "MPOS, Taman Satwa Anak"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kendaraan Gol III (mobil sedan, mini bus/sejenis, pick up kecil)",
+              "qty": 6,
+              "total": 36000,
+              "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Sepeda Motor dan kendaraan Roda Tiga",
+              "qty": 19,
+              "total": 57000,
+              "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Sepeda",
+              "qty": 66,
+              "total": 66000,
+              "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
+            }
+          ],
+          "MERCHANT_PAGE": [
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Tiket Dewasa",
+              "qty": 3104,
+              "total": 12416000,
+              "lokasi": "MPOS, Pintu Barat - Gate Dewasa, Pintu Barat - TVM, Pintu Utara - Gate Dewasa, Pintu Utara - TVM"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Tiket Anak (Usia 3-12 tahun)",
+              "qty": 665,
+              "total": 1995000,
+              "lokasi": "MPOS, Pintu Barat - Gate Anak, Pintu Barat - TVM, Pintu Utara - Gate Anak, Pintu Utara - TVM"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Pusat Primata Schmutzer (Dewasa) - Weekend",
+              "qty": 574,
+              "total": 4305000,
+              "lokasi": "MPOS, Pusat Primata Schmutzer"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Pusat Primata Schmutzer (Anak Usia 3-12 tahun) - Weekend",
+              "qty": 114,
+              "total": 855000,
+              "lokasi": "MPOS, Pusat Primata Schmutzer"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Taman Satwa Anak (Dewasa)",
+              "qty": 281,
+              "total": 702500,
+              "lokasi": "MPOS, Taman Satwa Anak"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Taman Satwa Anak (Anak Usia 3-12 tahun)",
+              "qty": 106,
+              "total": 265000,
+              "lokasi": "MPOS, Taman Satwa Anak"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kendaraan Gol I (bus besar, truck besar, mobil box besar)",
+              "qty": 3,
+              "total": 45000,
+              "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kendaraan Gol II (bus kecil, truck kecil, mobil box kecil, pick up besar)",
+              "qty": 8,
+              "total": 100000,
+              "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Kendaraan Gol III (mobil sedan, mini bus/sejenis, pick up kecil)",
+              "qty": 240,
+              "total": 1440000,
+              "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Sepeda Motor dan kendaraan Roda Tiga",
+              "qty": 595,
+              "total": 1785000,
+              "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
+            },
+            {
+              "item": "Taman Margasatwa Ragunan",
+              "kategori": "Sepeda",
+              "qty": 40,
+              "total": 40000,
+              "lokasi": "Kawasan Parkir, MPOS, Pintu Barat - TVM, Pintu Utara - TVM"
+            }
+          ],
+          "MPOS": []
+        },
+        "iwm": [
+          {
+            "lokasi": "Children Zoo",
+            "karcis_anak": 16,
+            "karcis_dewasa": 169,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 0,
+            "parkir_motor": 0,
+            "parkir_sepeda": 0,
+            "total": 185
+          },
+          {
+            "lokasi": "Gajah Tunggang",
+            "karcis_anak": 0,
+            "karcis_dewasa": 0,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 0,
+            "parkir_motor": 0,
+            "parkir_sepeda": 0,
+            "total": 0
+          },
+          {
+            "lokasi": "Kantor Pengelola",
+            "karcis_anak": 0,
+            "karcis_dewasa": 0,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 0,
+            "parkir_motor": 0,
+            "parkir_sepeda": 0,
+            "total": 0
+          },
+          {
+            "lokasi": "Kuda Tunggang",
+            "karcis_anak": 0,
+            "karcis_dewasa": 0,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 0,
+            "parkir_motor": 0,
+            "parkir_sepeda": 0,
+            "total": 0
+          },
+          {
+            "lokasi": "Pintu Barat",
+            "karcis_anak": 10,
+            "karcis_dewasa": 30,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 0,
+            "parkir_motor": 1,
+            "parkir_sepeda": 24,
+            "total": 65
+          },
+          {
+            "lokasi": "Pintu Barat Kendaraan",
+            "karcis_anak": 263,
+            "karcis_dewasa": 1158,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 196,
+            "parkir_motor": 357,
+            "parkir_sepeda": 10,
+            "total": 1984
+          },
+          {
+            "lokasi": "Pintu MIAMI",
+            "karcis_anak": 252,
+            "karcis_dewasa": 610,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 179,
+            "parkir_motor": 0,
+            "parkir_sepeda": 7,
+            "total": 1048
+          },
+          {
+            "lokasi": "Pintu Selatan",
+            "karcis_anak": 0,
+            "karcis_dewasa": 0,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 0,
+            "parkir_motor": 0,
+            "parkir_sepeda": 0,
+            "total": 0
+          },
+          {
+            "lokasi": "Pintu Timur",
+            "karcis_anak": 0,
+            "karcis_dewasa": 0,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 0,
+            "parkir_motor": 0,
+            "parkir_sepeda": 0,
+            "total": 0
+          },
+          {
+            "lokasi": "Pintu Utara 1",
+            "karcis_anak": 0,
+            "karcis_dewasa": 0,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 0,
+            "parkir_motor": 0,
+            "parkir_sepeda": 0,
+            "total": 0
+          },
+          {
+            "lokasi": "Pintu Utara 2",
+            "karcis_anak": 14,
+            "karcis_dewasa": 66,
+            "parkir_gol_1": 14,
+            "parkir_gol_2": 1,
+            "parkir_gol_3": 396,
+            "parkir_motor": 0,
+            "parkir_sepeda": 8,
+            "total": 499
+          },
+          {
+            "lokasi": "Pintu Utara 3",
+            "karcis_anak": 296,
+            "karcis_dewasa": 715,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 0,
+            "parkir_motor": 1,
+            "parkir_sepeda": 98,
+            "total": 1110
+          },
+          {
+            "lokasi": "Pintu Utara Motor",
+            "karcis_anak": 347,
+            "karcis_dewasa": 1572,
+            "parkir_gol_1": 0,
+            "parkir_gol_2": 0,
+            "parkir_gol_3": 0,
+            "parkir_motor": 806,
+            "parkir_sepeda": 21,
+            "total": 2746
           },
           {
             "lokasi": "Pusat Primata",

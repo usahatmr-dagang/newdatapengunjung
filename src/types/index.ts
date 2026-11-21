@@ -52,6 +52,8 @@ export interface STSUItem {
 export interface ShiftData {
   last_run: string;
   rekap: RekapData;
+  rekap_3a?: RekapData;
+  rekap_iwm?: RekapData;
   rekap_pendapatan?: RekapData;
   stsu?: Record<string, Record<string, STSUItem>>;
   tickets_3a: Ticket3A[];

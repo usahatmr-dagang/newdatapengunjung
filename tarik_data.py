@@ -804,8 +804,14 @@ def main():
         if shift == "malam":
             rekap_siang_data_visit = existing.get("siang", {}).get("rekap", {})
             rekap_visit = hitung_rekap_malam(data_3a_channels_visit, data_iwm, rekap_siang_data_visit, str_v)
+            rekap_siang_3a = existing.get("siang", {}).get("rekap_3a", {})
+            rekap_siang_iwm = existing.get("siang", {}).get("rekap_iwm", {})
+            rekap_3a_visit = hitung_rekap_malam(data_3a_channels_visit, [["Header"]], rekap_siang_3a, str_v)
+            rekap_iwm_visit = hitung_rekap_malam({}, data_iwm, rekap_siang_iwm, str_v)
         else:
             rekap_visit = hitung_rekap_siang(data_3a_channels_visit, data_iwm, str_v)
+            rekap_3a_visit = hitung_rekap_siang(data_3a_channels_visit, [["Header"]], str_v)
+            rekap_iwm_visit = hitung_rekap_siang({}, data_iwm, str_v)
 
         # --- MONOTONIC FIX: Prevent data from dropping (e.g. portal resets at 18:00) ---
         old_rekap_visit = existing_shift_payload.get("rekap", {})
@@ -844,6 +850,8 @@ def main():
                     "mobil": new_rekap_for_history.get("mobil", 0),
                     "bus": new_rekap_for_history.get("bus", 0),
                     "sepeda": new_rekap_for_history.get("sepeda", 0),
+                    "rekap_3a": rekap_3a_visit,
+                    "rekap_iwm": rekap_iwm_visit,
                     "tickets_3a_by_channel_visit": tickets_3a_by_channel_visit,
                     "iwm": iwm_list
                 }
@@ -864,6 +872,8 @@ def main():
                             "mobil": new_rekap_for_history.get("mobil", 0),
                             "bus": new_rekap_for_history.get("bus", 0),
                             "sepeda": new_rekap_for_history.get("sepeda", 0),
+                            "rekap_3a": rekap_3a_visit,
+                            "rekap_iwm": rekap_iwm_visit,
                             "tickets_3a_by_channel_visit": tickets_3a_by_channel_visit,
                             "iwm": iwm_list
                         })
@@ -874,6 +884,8 @@ def main():
         payload = {
             "last_run": datetime.now().isoformat(),
             "rekap": rekap_visit,
+            "rekap_3a": rekap_3a_visit,
+            "rekap_iwm": rekap_iwm_visit,
             "stsu": stsu_channels_visit,
             "tickets_3a_visit": tickets_3a_list_visit,
             "tickets_3a_by_channel_visit": tickets_3a_by_channel_visit,

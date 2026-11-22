@@ -35,6 +35,8 @@ jobs:
       - name: Run Scraper
         env:
           TZ: 'Asia/Jakarta'
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: |
           python3 tarik_data.py
           

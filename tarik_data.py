@@ -3,6 +3,12 @@ import re
 import json
 import os
 import sys
+import base64
+import smtplib
+import urllib.request
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 from datetime import datetime, timedelta
 import firebase_admin
 from firebase_admin import credentials
@@ -1008,6 +1014,450 @@ def hitung_rekap_malam(data_3a_channels, data_iwm, rekap_siang=None, target_date
         "bus_gol_2": max(0, cum.get("bus_gol_2", 0) - rekap_siang.get("bus_gol_2", 0))
     }
 
+
+# ==========================================
+# 3B. GENERATE GAMBAR INFOGRAFIS & KIRIM EMAIL OTOMATIS (10:00, 12:00, 16:30 -> 17:00)
+# ==========================================
+DEFAULT_EMAIL_RECIPIENTS = ["alfaditmr@gmail.com", "lilopambudi1300@gmail.com"]
+
+
+def file_to_data_url(rel_path: str, mime: str = "image/png") -> str:
+    if not os.path.exists(rel_path):
+        return ""
+    try:
+        with open(rel_path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("ascii")
+        return f"data:{mime};base64,{b64}"
+    except Exception:
+        return ""
+
+
+def ambil_cuaca_ragunan():
+    try:
+        url = "https://api.open-meteo.com/v1/forecast?latitude=-6.3122&longitude=106.8206&current_weather=true"
+        req = urllib.request.Request(url, headers={"User-Agent": "TMR-Scraper/2.0"})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            d = json.loads(resp.read().decode("utf-8"))
+        cw = d.get("current_weather", {})
+        temp = round(float(cw.get("temperature", 29)))
+        code = int(cw.get("weathercode", 2))
+        desc = "Sunny / Cerah"
+        icon = "☀️"
+        if 1 <= code <= 3:
+            desc, icon = "Cloudy / Berawan", "⛅"
+        elif 45 <= code <= 48:
+            desc, icon = "Fog / Kabut", "🌫️"
+        elif 51 <= code <= 67:
+            desc, icon = "Light Rain / Hujan Ringan", "🌦️"
+        elif 80 <= code <= 82:
+            desc, icon = "Heavy Rain / Hujan Deras", "🌧️"
+        elif code >= 95:
+            desc, icon = "Thunderstorm / Badai Petir", "⛈️"
+        return {"temp": temp, "desc": desc, "icon": icon}
+    except Exception:
+        return {"temp": 29, "desc": "Cloudy / Berawan", "icon": "⛅"}
+
+
+def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time, rekap_siang_data, existing, force_send=False):
+    """
+    Membuat gambar laporan infografis (format identik menu Laporan WA) dan mengirimkannya
+    ke alfaditmr@gmail.com & lilopambudi1300@gmail.com pada jadwal:
+    - Pukul 10:00 WIB (tertulis pukul 10:00 WIB)
+    - Pukul 12:00 WIB (tertulis pukul 12:00 WIB)
+    - Pukul 16:30 WIB (data penutupan 16:30, tertulis pukul 17:00 WIB di laporan)
+    """
+    sent_list = existing.get("email_reports_sent", [])
+    if not isinstance(sent_list, list):
+        sent_list = []
+
+    slot_id = None
+    display_jam = None
+
+    if snap_time in ("10:00", "10:15") and "10:00" not in sent_list:
+        slot_id = "10:00"
+        display_jam = "10:00"
+    elif snap_time in ("12:00", "12:15") and "12:00" not in sent_list:
+        slot_id = "12:00"
+        display_jam = "12:00"
+    elif snap_time in ("16:30", "16:45") and "16:30" not in sent_list:
+        slot_id = "16:30"
+        display_jam = "17:00"  # Data 16:30 ditampilkan sebagai pukul 17:00 WIB sesuai permintaan
+    elif force_send:
+        slot_id = snap_time
+        display_jam = "17:00" if snap_time >= "16:30" else snap_time
+
+    if not slot_id or not display_jam:
+        return False
+
+    print(f"\n📧 [EMAIL REPORT] Menyiapkan laporan infografis untuk slot data {slot_id} (Tampil di laporan: pukul {display_jam} WIB)...")
+
+    # 1. Ambil pengaturan foto satwa pilihan & penerima dari Firestore
+    photo_data_url = ""
+    recipients = list(DEFAULT_EMAIL_RECIPIENTS)
+    if db_client:
+        try:
+            doc_snap = db_client.collection("report_settings").document("config").get()
+            if doc_snap.exists:
+                cfg = doc_snap.to_dict() or {}
+                src = cfg.get("selected_photo_src", "")
+                if src.startswith("data:image/"):
+                    photo_data_url = src
+                elif src.startswith("/"):
+                    local_p = os.path.join("public", src.lstrip("/"))
+                    mime = "image/png" if local_p.endswith(".png") else "image/jpeg"
+                    photo_data_url = file_to_data_url(local_p, mime)
+                extra_rec = cfg.get("email_recipients")
+                if isinstance(extra_rec, list):
+                    for r_email in extra_rec:
+                        if r_email and "@" in str(r_email) and r_email not in recipients:
+                            recipients.append(str(r_email).strip())
+        except Exception as e_cfg:
+            print(f"⚠️ [EMAIL REPORT] Gagal membaca report_settings dari Firestore: {e_cfg}")
+
+    if not photo_data_url:
+        photo_data_url = file_to_data_url(os.path.join("public", "chimpanzee_sidebar.png"), "image/png") or \
+                         file_to_data_url(os.path.join("public", "harimau.jpg"), "image/jpeg")
+
+    logo_dki_url = file_to_data_url(os.path.join("public", "logo-dki.png"), "image/png")
+    logo_ragunan_url = file_to_data_url(os.path.join("public", "logo-ragunan.png"), "image/png")
+    weather = ambil_cuaca_ragunan()
+
+    # Format baris tanggal & jam laporan
+    try:
+        tgl_obj = datetime.strptime(target_date_str, "%Y-%m-%d")
+    except Exception:
+        tgl_obj = datetime.now()
+    hari_dict = {0: 'Senin', 1: 'Selasa', 2: 'Rabu', 3: 'Kamis', 4: 'Jumat', 5: 'Sabtu', 6: 'Minggu'}
+    bulan_dict = {1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April', 5: 'Mei', 6: 'Juni', 7: 'Juli', 8: 'Agustus', 9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'}
+    title_line = f"{hari_dict[tgl_obj.weekday()]}, {tgl_obj.strftime('%d')} {bulan_dict[tgl_obj.month]} {tgl_obj.strftime('%Y')} pukul {display_jam} WIB"
+
+    # 2. Render gambar PNG berukuran 1000x600 menggunakan Canvas di Headless Chrome
+    driver.get("about:blank")
+    render_payload = {
+        "titleLine": title_line,
+        "dewasa": int(rekap_siang_data.get("dewasa", 0)),
+        "anak": int(rekap_siang_data.get("anak", 0)),
+        "total": int(rekap_siang_data.get("total_pengunjung", 0)),
+        "sepeda": int(rekap_siang_data.get("sepeda", 0)),
+        "motor": int(rekap_siang_data.get("motor", 0)),
+        "mobil": int(rekap_siang_data.get("mobil", 0)),
+        "bus": int(rekap_siang_data.get("bus", 0)),
+        "tsa": int(rekap_siang_data.get("tsa", 0)),
+        "pps": int(rekap_siang_data.get("pps", 0)),
+        "weatherText": f"{weather['temp']}° C - {weather['desc']}",
+        "weatherIcon": weather["icon"],
+        "photoSrc": photo_data_url,
+        "logoDki": logo_dki_url,
+        "logoRagunan": logo_ragunan_url
+    }
+
+    data_url_png = driver.execute_async_script("""
+        const cfg = arguments[0];
+        const done = arguments[1];
+
+        const canvas = document.createElement('canvas');
+        const W = 1000, H = 600;
+        canvas.width = W;
+        canvas.height = H;
+        const ctx = canvas.getContext('2d');
+
+        const fmt = (n) => new Intl.NumberFormat('en-US').format(n || 0);
+        const loadImg = (src) => new Promise((res) => {
+            if (!src) return res(null);
+            const i = new Image();
+            i.onload = () => res(i);
+            i.onerror = () => res(null);
+            i.src = src;
+        });
+
+        const roundRect = (x, y, w, h, r) => {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        };
+
+        const drawPill = (cx, y, w, h, color, text, fontSize = 28) => {
+            const x = cx - w / 2;
+            ctx.beginPath();
+            ctx.moveTo(x + 14, y);
+            ctx.lineTo(x + w - 14, y);
+            ctx.lineTo(x + w, y + h / 2);
+            ctx.lineTo(x + w - 14, y + h);
+            ctx.lineTo(x + 14, y + h);
+            ctx.lineTo(x, y + h / 2);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `800 ${fontSize}px Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, cx, y + h / 2 + 1);
+        };
+
+        const drawEmoji = (emoji, cx, cy, size) => {
+            ctx.font = `${size}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#000';
+            ctx.fillText(emoji, cx, cy);
+        };
+
+        const drawLabel = (text, cx, y) => {
+            ctx.font = '800 25px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#4a3a22';
+            ctx.fillText(text, cx, y);
+        };
+
+        Promise.all([loadImg(cfg.photoSrc), loadImg(cfg.logoDki), loadImg(cfg.logoRagunan)]).then(([bgImg, dkiImg, ragImg]) => {
+            ctx.fillStyle = '#e9e4d6';
+            ctx.fillRect(0, 0, W, H);
+
+            if (bgImg) {
+                const scale = Math.max(W / bgImg.width, H / bgImg.height);
+                const dw = bgImg.width * scale;
+                const dh = bgImg.height * scale;
+                ctx.drawImage(bgImg, W - dw, (H - dh) / 2, dw, dh);
+            }
+
+            const grad = ctx.createLinearGradient(0, 0, W, 0);
+            grad.addColorStop(0, 'rgba(239,235,222,0.97)');
+            grad.addColorStop(0.44, 'rgba(239,235,222,0.90)');
+            grad.addColorStop(0.62, 'rgba(239,235,222,0.35)');
+            grad.addColorStop(0.78, 'rgba(239,235,222,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, H);
+
+            // Panji DKI
+            ctx.fillStyle = '#f5b400';
+            ctx.beginPath();
+            ctx.moveTo(42, 0); ctx.lineTo(138, 0); ctx.lineTo(138, 110); ctx.lineTo(90, 132); ctx.lineTo(42, 110);
+            ctx.closePath(); ctx.fill();
+
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.moveTo(47, 0); ctx.lineTo(133, 0); ctx.lineTo(133, 105); ctx.lineTo(90, 125); ctx.lineTo(47, 105);
+            ctx.closePath(); ctx.fill();
+
+            if (dkiImg) {
+                const lh = 76;
+                const lw = (dkiImg.width / dkiImg.height) * lh;
+                ctx.drawImage(dkiImg, 90 - lw / 2, 18, lw, lh);
+            }
+
+            // Judul
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'alphabetic';
+            ctx.font = '900 34px Arial, sans-serif';
+            ctx.lineWidth = 7;
+            ctx.strokeStyle = '#ffffff';
+            ctx.strokeText('DATA PENGUNJUNG', 180, 58);
+            ctx.fillStyle = '#3b8728';
+            ctx.fillText('DATA PENGUNJUNG', 180, 58);
+
+            // Badge tanggal
+            roundRect(180, 74, 445, 42, 8);
+            ctx.fillStyle = '#f7931e';
+            ctx.fill();
+            ctx.setLineDash([6, 5]);
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#4a3520';
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '700 18px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(cfg.titleLine, 402, 96);
+
+            // Dewasa & Anak
+            drawEmoji('🐅', 105, 184, 68);
+            drawLabel('Dewasa', 105, 240);
+            drawPill(105, 260, 122, 38, '#883997', fmt(cfg.dewasa), 26);
+
+            drawEmoji('🐯', 246, 184, 68);
+            drawLabel('Anak', 246, 240);
+            drawPill(246, 260, 114, 38, '#883997', fmt(cfg.anak), 26);
+
+            // TOTAL
+            roundRect(362, 165, 138, 38, 2);
+            ctx.fillStyle = '#754c24';
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 28px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('TOTAL', 431, 185);
+
+            roundRect(326, 203, 210, 62, 2);
+            ctx.fillStyle = '#7ab81d';
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 48px Arial, sans-serif';
+            ctx.fillText(fmt(cfg.total), 431, 236);
+
+            // Kendaraan
+            drawEmoji('🚲', 105, 336, 54);
+            drawLabel('Sepeda', 105, 392);
+            drawPill(105, 410, 106, 36, '#c9403e', fmt(cfg.sepeda), 25);
+
+            drawEmoji('🏍️', 244, 336, 54);
+            drawLabel('Motor', 244, 392);
+            drawPill(244, 410, 114, 36, '#ec654f', fmt(cfg.motor), 25);
+
+            drawEmoji('🚗', 376, 336, 54);
+            drawLabel('Mobil', 376, 392);
+            drawPill(376, 410, 114, 36, '#f2b622', fmt(cfg.mobil), 25);
+
+            drawEmoji('🚌', 504, 336, 54);
+            drawLabel('Bus', 504, 392);
+            drawPill(504, 410, 106, 36, '#8cc63f', fmt(cfg.bus), 25);
+
+            // Garis pemisah
+            ctx.save();
+            ctx.setLineDash([4, 4]);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#8cc63f';
+            ctx.beginPath();
+            for (let x = 34; x <= 450; x += 4) {
+                const y = 468 + Math.sin((x - 34) / 8) * 3;
+                if (x === 34) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            // TSA & PPS
+            roundRect(78, 484, 134, 34, 17);
+            ctx.fillStyle = '#f5a028';
+            ctx.fill();
+            drawEmoji('🐊', 98, 501, 18);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 20px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(fmt(cfg.tsa), 146, 502);
+            ctx.beginPath(); ctx.arc(194, 501, 13, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+            ctx.fillStyle = '#4a3a22'; ctx.font = '900 10px Arial, sans-serif'; ctx.fillText('TSA', 194, 502);
+
+            roundRect(272, 484, 134, 34, 17);
+            ctx.fillStyle = '#f5a028';
+            ctx.fill();
+            ctx.beginPath(); ctx.arc(290, 501, 13, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+            ctx.fillStyle = '#4a3a22'; ctx.font = '900 10px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('PPS', 290, 502);
+            ctx.fillStyle = '#ffffff'; ctx.font = '800 20px Arial, sans-serif'; ctx.fillText(fmt(cfg.pps), 338, 502);
+            drawEmoji('🦍', 388, 501, 18);
+
+            // Cuaca
+            roundRect(94, 535, 294, 50, 10);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#99c24d';
+            ctx.stroke();
+            drawEmoji(cfg.weatherIcon, 132, 560, 28);
+            ctx.fillStyle = '#222222';
+            ctx.font = '800 15px Arial, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(cfg.weatherText, 165, 561);
+
+            // Lengkungan putih kanan bawah + Logo Ragunan
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(815, 600);
+            ctx.quadraticCurveTo(845, 520, 1000, 490);
+            ctx.lineTo(1000, 600);
+            ctx.closePath();
+            ctx.fill();
+
+            if (ragImg) {
+                const rh = 54;
+                const rw = (ragImg.width / ragImg.height) * rh;
+                ctx.drawImage(ragImg, 986 - rw, 590 - rh, rw, rh);
+            }
+
+            done(canvas.toDataURL('image/png'));
+        });
+    """, render_payload)
+
+    if not data_url_png or not str(data_url_png).startswith("data:image/png;base64,"):
+        print("⚠️ [EMAIL REPORT] Gagal merender gambar canvas.")
+        return False
+
+    png_bytes = base64.b64decode(str(data_url_png).split(",", 1)[1])
+
+    # 3. Kirim Email melalui Gmail SMTP
+    gmail_user = (os.environ.get("GMAIL_USER") or "usahatmr@gmail.com").strip()
+    gmail_app_password = (os.environ.get("GMAIL_APP_PASSWORD") or "").strip()
+
+    if not gmail_app_password:
+        print("⚠️ [EMAIL REPORT] Secret GMAIL_APP_PASSWORD belum diatur di GitHub Secrets. Gambar berhasil dibuat namun pengiriman email dilewati.")
+        return False
+
+    try:
+        msg = MIMEMultipart("related")
+        msg["Subject"] = f"Laporan Data Pengunjung TMR - {title_line}"
+        msg["From"] = f"TMR Scraper Dashboard <{gmail_user}>"
+        msg["To"] = ", ".join(recipients)
+
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; color: #1f2937; max-width: 720px;">
+            <h2 style="color: #15803d; margin-bottom: 4px;">Laporan Data Pengunjung Taman Margasatwa Ragunan</h2>
+            <p style="margin-top: 0; color: #4b5563;"><strong>{title_line}</strong></p>
+            <div style="margin: 16px 0;">
+                <img src="cid:laporan_infografis" alt="Laporan Pengunjung TMR" style="max-width: 100%; border-radius: 10px; border: 1px solid #d1d5db;" />
+            </div>
+            <table style="border-collapse: collapse; width: 100%; max-width: 480px; font-size: 14px;">
+                <tr style="background: #15803d; color: #ffffff;">
+                    <th style="padding: 8px 12px; text-align: left;">Kategori</th>
+                    <th style="padding: 8px 12px; text-align: right;">Jumlah</th>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 6px 12px;">Dewasa</td><td style="padding: 6px 12px; text-align: right; font-weight: bold;">{render_payload['dewasa']:,}</td></tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 6px 12px;">Anak</td><td style="padding: 6px 12px; text-align: right; font-weight: bold;">{render_payload['anak']:,}</td></tr>
+                <tr style="border-bottom: 2px solid #15803d; background: #f0fdf4;"><td style="padding: 8px 12px; font-weight: bold;">TOTAL PENGUNJUNG</td><td style="padding: 8px 12px; text-align: right; font-weight: bold; color: #15803d;">{render_payload['total']:,}</td></tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 6px 12px;">Sepeda</td><td style="padding: 6px 12px; text-align: right;">{render_payload['sepeda']:,}</td></tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 6px 12px;">Motor</td><td style="padding: 6px 12px; text-align: right;">{render_payload['motor']:,}</td></tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 6px 12px;">Mobil</td><td style="padding: 6px 12px; text-align: right;">{render_payload['mobil']:,}</td></tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 6px 12px;">Bus</td><td style="padding: 6px 12px; text-align: right;">{render_payload['bus']:,}</td></tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 6px 12px;">Taman Satwa Anak (TSA)</td><td style="padding: 6px 12px; text-align: right;">{render_payload['tsa']:,}</td></tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;"><td style="padding: 6px 12px;">Pusat Primata Schmutzer (PPS)</td><td style="padding: 6px 12px; text-align: right;">{render_payload['pps']:,}</td></tr>
+            </table>
+            <p style="font-size: 12px; color: #6b7280; margin-top: 16px;">
+                Dikirim otomatis oleh sistem TMR Scraper Dashboard (<a href="https://tmr-scraper-db.web.app/">tmr-scraper-db.web.app</a>).
+            </p>
+        </div>
+        """
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+        filename = f"laporan-pengunjung-{target_date_str}-{display_jam.replace(':', '')}.png"
+        img_inline = MIMEImage(png_bytes, _subtype="png")
+        img_inline.add_header("Content-ID", "<laporan_infografis>")
+        img_inline.add_header("Content-Disposition", "inline", filename=filename)
+        msg.attach(img_inline)
+
+        img_attach = MIMEImage(png_bytes, _subtype="png")
+        img_attach.add_header("Content-Disposition", "attachment", filename=filename)
+        msg.attach(img_attach)
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=20) as server:
+            server.login(gmail_user, gmail_app_password)
+            server.sendmail(gmail_user, recipients, msg.as_string())
+
+        sent_list.append(slot_id)
+        existing["email_reports_sent"] = sent_list
+        print(f"✅ [EMAIL REPORT] Laporan pukul {display_jam} WIB berhasil dikirim ke: {', '.join(recipients)}!")
+        return True
+    except Exception as e_mail:
+        print(f"❌ [EMAIL REPORT] Gagal mengirim email: {e_mail}")
+        return False
+
 # ==========================================
 # 4. PROGRAM UTAMA (MAIN)
 # ==========================================
@@ -1598,6 +2048,16 @@ def main():
                 del existing["malam"]
                 
         print(f"✅ [LOKAL] Rekap Shift {shift.upper()} berhasil diproses. Pengunjung: {payload['rekap'].get('total_pengunjung', 0)}")
+
+        # KIRIM LAPORAN INFOGRAFIS KE EMAIL PADA JAM 10:00, 12:00, DAN 16:30 (DITULIS 17:00 WIB)
+        try:
+            force_email = any(a.lower().strip() in ("email", "test_email") for a in sys.argv[1:])
+            rekap_siang_for_email = existing.get("siang", {}).get("rekap") or rekap_visit
+            render_dan_kirim_email_laporan(
+                driver, db, str_v, current_slot_str, rekap_siang_for_email, existing, force_send=force_email
+            )
+        except Exception as e_rep:
+            print(f"⚠️ [EMAIL REPORT] Error saat memproses laporan email: {e_rep}")
 
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(existing, f, indent=2, ensure_ascii=False)

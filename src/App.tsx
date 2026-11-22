@@ -8,17 +8,19 @@ import { HourlyHistory } from './components/HourlyHistory';
 import { ScraperStatus } from './components/ScraperStatus';
 import { MonthlyReport } from './components/MonthlyReport';
 import { YearlyReport } from './components/YearlyReport';
+import { LaporanWA } from './components/LaporanWA';
 import { 
   Settings, 
   Zap,
   Users,
   Clock,
   Calendar,
-  BarChart2
+  BarChart2,
+  Send
 } from 'lucide-react';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'riwayat_jam' | 'status' | 'bulanan' | 'tahunan'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'riwayat_jam' | 'laporan_wa' | 'status' | 'bulanan' | 'tahunan'>('dashboard');
   const [records, setRecords] = useState<DailyRecord[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -79,6 +81,13 @@ function App() {
             Riwayat Jam (15 Menit)
           </button>
           <button 
+            className={`nav-tab ${activeTab === 'laporan_wa' ? 'active' : ''}`}
+            onClick={() => setActiveTab('laporan_wa')}
+          >
+            <Send size={16} />
+            Laporan WA
+          </button>
+          <button 
             className={`nav-tab ${activeTab === 'bulanan' ? 'active' : ''}`}
             onClick={() => setActiveTab('bulanan')}
           >
@@ -123,6 +132,7 @@ function App() {
           <>
             {activeTab === 'dashboard' && <DashboardPengunjung data={records} />}
             {activeTab === 'riwayat_jam' && <HourlyHistory data={records} />}
+            {activeTab === 'laporan_wa' && <LaporanWA data={records} />}
             {activeTab === 'status' && (
               <ScraperStatus data={records} />
             )}

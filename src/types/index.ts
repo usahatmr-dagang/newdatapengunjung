@@ -49,12 +49,46 @@ export interface STSUItem {
   nominal: number;
 }
 
+export interface LateSyncIWMBucket {
+  total_pengunjung: number;
+  dewasa: number;
+  anak: number;
+  pps: number;
+  tsa: number;
+  motor: number;
+  mobil: number;
+  bus: number;
+  bus_gol_1: number;
+  bus_gol_2: number;
+  sepeda: number;
+}
+
+export interface LateSyncIWMInfo extends LateSyncIWMBucket {
+  delta_pengunjung?: number;
+  delta_dewasa?: number;
+  delta_anak?: number;
+  delta_pps?: number;
+  delta_tsa?: number;
+  delta_motor?: number;
+  delta_mobil?: number;
+  delta_bus?: number;
+  delta_sepeda?: number;
+  cutoff_time?: string;
+  by_hour?: Record<string, LateSyncIWMBucket>;
+  by_lokasi?: Record<string, LateSyncIWMBucket>;
+  by_slot_masuk?: Record<string, LateSyncIWMBucket>;
+}
+
 export interface ShiftData {
   last_run: string;
   rekap: RekapData;
   rekap_3a?: RekapData;
   rekap_iwm?: RekapData;
   rekap_pendapatan?: RekapData;
+  late_sync_iwm?: LateSyncIWMInfo;
+  late_sync_3a?: LateSyncIWMInfo;
+  iwm_malam_real?: IWMRecord[];
+  tickets_3a_by_channel_malam_real?: Record<string, Ticket3A[]>;
   stsu?: Record<string, Record<string, STSUItem>>;
   tickets_3a: Ticket3A[];
   tickets_3a_visit?: Ticket3A[];

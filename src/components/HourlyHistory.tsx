@@ -12,7 +12,7 @@ import {
   Filler
 } from 'chart.js';
 import { Clock, TrendingUp, Users, Calendar, RefreshCw, Layers, Ticket, MapPin } from 'lucide-react';
-import type { DailyRecord } from '../types';
+import type { DailyRecord, LateSyncIWMInfo } from '../types';
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler
@@ -33,6 +33,10 @@ interface HistorySnapshot {
   sepeda: number;
   rekap_3a?: any;
   rekap_iwm?: any;
+  tickets_3a_by_channel_malam_real?: any;
+  late_sync_3a?: LateSyncIWMInfo;
+  iwm_malam_real?: any[];
+  late_sync_iwm?: LateSyncIWMInfo;
   tickets_3a_by_channel_visit?: any;
   iwm?: any[];
 }
@@ -70,6 +74,11 @@ interface ParsedSnapshotBreakdown {
   // Per-lokasi IWM cumulative & delta
   lokasiIWM: Record<string, SourceMetrics>;
   deltaLokasiIWM: Record<string, SourceMetrics>;
+  // Late-sync daytime 3A & IWM transactions (< 16:45:00) that arrived at this night slot
+  lateSyncSlot3A: SourceMetrics;
+  lateSyncInfo3A?: LateSyncIWMInfo;
+  lateSyncSlot: SourceMetrics;
+  lateSyncInfo?: LateSyncIWMInfo;
 }
 
 interface HourlyHistoryProps {
@@ -416,13 +425,19 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
       siangEndChannels3A = rawList[lastSiangIdx].raw3A.byChannel;
       siangEndIWM = rawList[lastSiangIdx].rawIWM.total;
       siangEndLokasiIWM = rawList[lastSiangIdx].rawIWM.byLokasi;
-    } else if (selectedRecord?.siang) {
+    }
+    if (selectedRecord?.siang) {
       const s3a = extractRaw3A(selectedRecord.siang.tickets_3a_by_channel_visit, selectedRecord.siang.rekap_3a);
       const siwm = extractRawIWM(selectedRecord.siang.iwm, selectedRecord.siang.rekap_iwm);
-      siangEnd3A = s3a.total;
-      siangEndChannels3A = s3a.byChannel;
-      siangEndIWM = siwm.total;
-      siangEndLokasiIWM = siwm.byLokasi;
+      if (lastSiangIdx < 0 || s3a.total.total_pengunjung >= siangEnd3A.total_pengunjung) {
+        siangEnd3A = s3a.total;
+        siangEndChannels3A = s3a.byChannel;
+      }
+      // If siang IWM was auto-corrected by Detail Transaksi Pos late-sync detection, use the updated siang baseline
+      if (lastSiangIdx < 0 || siwm.total.total_pengunjung >= siangEndIWM.total_pengunjung) {
+        siangEndIWM = siwm.total;
+        siangEndLokasiIWM = siwm.byLokasi;
+      }
     }
 
     // Build shift-level metrics for each snapshot
@@ -438,19 +453,37 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
         };
       }
 
-      // For Malam shift, subtract end-of-siang baseline if raw data is full-day cumulative
-      const isCumulativeRaw3A = item.raw3A.total.total_pengunjung >= siangEnd3A.total_pengunjung && siangEnd3A.total_pengunjung > 0;
+      // 3A Malam: Use verified time-range query (>= 16:45:00) directly if available
+      let m3A: SourceMetrics;
+      let ch3A: Record<string, SourceMetrics> = {};
+      if (item.snap.tickets_3a_by_channel_malam_real && typeof item.snap.tickets_3a_by_channel_malam_real === 'object') {
+        const verifiedMalam3A = extractRaw3A(item.snap.tickets_3a_by_channel_malam_real, item.snap.rekap_3a);
+        m3A = verifiedMalam3A.total;
+        ch3A = verifiedMalam3A.byChannel;
+      } else {
+        const isCumulativeRaw3A = item.raw3A.total.total_pengunjung >= siangEnd3A.total_pengunjung && siangEnd3A.total_pengunjung > 0;
+        m3A = isCumulativeRaw3A ? subtractMetrics(item.raw3A.total, siangEnd3A) : item.raw3A.total;
+        Object.keys(item.raw3A.byChannel).forEach(ch => {
+          const currCh = item.raw3A.byChannel[ch];
+          const baseCh = siangEndChannels3A[ch] || emptyMetrics();
+          ch3A[ch] = isCumulativeRaw3A ? subtractMetrics(currCh, baseCh) : currCh;
+        });
+      }
+
+      // If snapshot has verified iwm_malam_real from Detail Transaksi Pos (>= 16:45:00), use it directly!
+      if (Array.isArray(item.snap.iwm_malam_real) && item.snap.iwm_malam_real.length > 0) {
+        const verifiedMalamIWM = extractRawIWM(item.snap.iwm_malam_real, item.snap.rekap_iwm);
+        return {
+          snap: item.snap,
+          metrics3A: m3A,
+          channels3A: ch3A,
+          metricsIWM: verifiedMalamIWM.total,
+          lokasiIWM: verifiedMalamIWM.byLokasi,
+        };
+      }
+
       const isCumulativeRawIWM = item.rawIWM.total.total_pengunjung >= siangEndIWM.total_pengunjung && siangEndIWM.total_pengunjung > 0;
-
-      const m3A = isCumulativeRaw3A ? subtractMetrics(item.raw3A.total, siangEnd3A) : item.raw3A.total;
       const mIWM = isCumulativeRawIWM ? subtractMetrics(item.rawIWM.total, siangEndIWM) : item.rawIWM.total;
-
-      const ch3A: Record<string, SourceMetrics> = {};
-      Object.keys(item.raw3A.byChannel).forEach(ch => {
-        const currCh = item.raw3A.byChannel[ch];
-        const baseCh = siangEndChannels3A[ch] || emptyMetrics();
-        ch3A[ch] = isCumulativeRaw3A ? subtractMetrics(currCh, baseCh) : currCh;
-      });
 
       const lokIWM: Record<string, SourceMetrics> = {};
       Object.keys(item.rawIWM.byLokasi).forEach(lok => {
@@ -506,6 +539,72 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
       const prevCombinedTotal = isFirstInShift ? 0 : shiftLevelList[prevInShiftIdx].snap.total_pengunjung;
       const deltaCombined = Math.max(0, curr.snap.total_pengunjung - prevCombinedTotal);
 
+      // Extract late-sync daytime 3A arrivals for this 15-minute slot
+      const lsInfo3A = curr.snap.late_sync_3a || (curr.snap.shift === 'malam' ? selectedRecord?.malam?.late_sync_3a : undefined);
+      const slotBucket3A = lsInfo3A?.by_slot_masuk?.[curr.snap.jam];
+      const lateSyncSlot3A: SourceMetrics = slotBucket3A
+        ? {
+            total_pengunjung: Number(slotBucket3A.total_pengunjung) || 0,
+            dewasa: Number(slotBucket3A.dewasa) || 0,
+            anak: Number(slotBucket3A.anak) || 0,
+            pps: Number(slotBucket3A.pps) || 0,
+            tsa: Number(slotBucket3A.tsa) || 0,
+            motor: Number(slotBucket3A.motor) || 0,
+            mobil: Number(slotBucket3A.mobil) || 0,
+            bus: Number(slotBucket3A.bus) || 0,
+            bus_gol_1: Number(slotBucket3A.bus_gol_1) || 0,
+            bus_gol_2: Number(slotBucket3A.bus_gol_2) || 0,
+            sepeda: Number(slotBucket3A.sepeda) || 0,
+          }
+        : curr.snap.late_sync_3a?.delta_pengunjung
+        ? {
+            total_pengunjung: Number(curr.snap.late_sync_3a.delta_pengunjung) || 0,
+            dewasa: Number(curr.snap.late_sync_3a.delta_dewasa) || 0,
+            anak: Number(curr.snap.late_sync_3a.delta_anak) || 0,
+            pps: Number(curr.snap.late_sync_3a.delta_pps) || 0,
+            tsa: Number(curr.snap.late_sync_3a.delta_tsa) || 0,
+            motor: Number(curr.snap.late_sync_3a.delta_motor) || 0,
+            mobil: Number(curr.snap.late_sync_3a.delta_mobil) || 0,
+            bus: Number(curr.snap.late_sync_3a.delta_bus) || 0,
+            bus_gol_1: 0,
+            bus_gol_2: 0,
+            sepeda: Number(curr.snap.late_sync_3a.delta_sepeda) || 0,
+          }
+        : emptyMetrics();
+
+      // Extract late-sync daytime IWM arrivals for this 15-minute slot
+      const lsInfo = curr.snap.late_sync_iwm || (curr.snap.shift === 'malam' ? selectedRecord?.malam?.late_sync_iwm : undefined);
+      const slotBucket = lsInfo?.by_slot_masuk?.[curr.snap.jam];
+      const lateSyncSlot: SourceMetrics = slotBucket
+        ? {
+            total_pengunjung: Number(slotBucket.total_pengunjung) || 0,
+            dewasa: Number(slotBucket.dewasa) || 0,
+            anak: Number(slotBucket.anak) || 0,
+            pps: Number(slotBucket.pps) || 0,
+            tsa: Number(slotBucket.tsa) || 0,
+            motor: Number(slotBucket.motor) || 0,
+            mobil: Number(slotBucket.mobil) || 0,
+            bus: Number(slotBucket.bus) || 0,
+            bus_gol_1: Number(slotBucket.bus_gol_1) || 0,
+            bus_gol_2: Number(slotBucket.bus_gol_2) || 0,
+            sepeda: Number(slotBucket.sepeda) || 0,
+          }
+        : curr.snap.late_sync_iwm?.delta_pengunjung
+        ? {
+            total_pengunjung: Number(curr.snap.late_sync_iwm.delta_pengunjung) || 0,
+            dewasa: Number(curr.snap.late_sync_iwm.delta_dewasa) || 0,
+            anak: Number(curr.snap.late_sync_iwm.delta_anak) || 0,
+            pps: Number(curr.snap.late_sync_iwm.delta_pps) || 0,
+            tsa: Number(curr.snap.late_sync_iwm.delta_tsa) || 0,
+            motor: Number(curr.snap.late_sync_iwm.delta_motor) || 0,
+            mobil: Number(curr.snap.late_sync_iwm.delta_mobil) || 0,
+            bus: Number(curr.snap.late_sync_iwm.delta_bus) || 0,
+            bus_gol_1: 0,
+            bus_gol_2: 0,
+            sepeda: Number(curr.snap.late_sync_iwm.delta_sepeda) || 0,
+          }
+        : emptyMetrics();
+
       return {
         jam: curr.snap.jam,
         shift: curr.snap.shift,
@@ -521,6 +620,10 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
         deltaChannels3A,
         lokasiIWM: curr.lokasiIWM,
         deltaLokasiIWM,
+        lateSyncSlot3A,
+        lateSyncInfo3A: lsInfo3A,
+        lateSyncSlot,
+        lateSyncInfo: lsInfo,
       };
     });
   }, [history, data, selectedDate]);
@@ -1107,6 +1210,19 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                           </div>
                         ))}
                       </div>
+                      {b.lateSyncSlot3A.total_pengunjung > 0 && (
+                        <div style={{
+                          marginTop: '10px',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          background: 'rgba(234, 88, 12, 0.16)',
+                          border: '1px solid rgba(251, 146, 60, 0.35)',
+                          fontSize: '0.8rem',
+                          color: '#fdba74'
+                        }}>
+                          🔄 <strong>+{formatNumber(b.lateSyncSlot3A.total_pengunjung)} pengunjung Siang 3A (&le;16:44:59)</strong> baru tersinkronisasi pada pukul <strong>{b.jam} WIB</strong> (Otomatis masuk ke Rekap Siang 3A, bukan Malam).
+                        </div>
+                      )}
                     </div>
 
                     {/* Box IWM */}
@@ -1152,6 +1268,19 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                           </div>
                         ))}
                       </div>
+                      {b.lateSyncSlot.total_pengunjung > 0 && (
+                        <div style={{
+                          marginTop: '10px',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          background: 'rgba(234, 88, 12, 0.16)',
+                          border: '1px solid rgba(251, 146, 60, 0.35)',
+                          fontSize: '0.8rem',
+                          color: '#fdba74'
+                        }}>
+                          🔄 <strong>+{formatNumber(b.lateSyncSlot.total_pengunjung)} pengunjung Siang (&lt;16:45)</strong> baru tersinkronisasi ke server IWM pada pukul <strong>{b.jam} WIB</strong> (Otomatis masuk ke Rekap Siang, bukan Malam).
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -1570,10 +1699,44 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                       Riwayat & Penambahan Per 15 Menit — DASHBOARD 3A
                     </h3>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      Mencakup seluruh channel 3A (New Gate, TVM, Merchant Page, MPOS). Angka hijau <strong style={{ color: '#34d399' }}>+Δ</strong> menunjukkan penambahan dari 15 menit sebelumnya.
+                      Mencakup seluruh channel 3A (New Gate, TVM, Merchant Page, MPOS). Saat Shift Malam, ditarik langsung berdasarkan jam transaksi <strong>(&le; 16:44:59 = Siang, &ge; 16:45:00 = Malam)</strong> tanpa sistem pengurangan lama.
                     </span>
                   </div>
                 </div>
+
+                {/* Info Rekonsiliasi Late-Sync 3A jika ada */}
+                {(() => {
+                  const latestLateSync3A = [...parsedBreakdowns].reverse().find(b => b.lateSyncInfo3A && b.lateSyncInfo3A.total_pengunjung > 0)?.lateSyncInfo3A;
+                  if (!latestLateSync3A) return null;
+                  const byChEntries = Object.entries(latestLateSync3A.by_lokasi || {}).filter(([, v]) => v.total_pengunjung > 0);
+
+                  return (
+                    <div style={{
+                      background: 'rgba(59, 130, 246, 0.1)',
+                      border: '1px solid rgba(96, 165, 250, 0.35)',
+                      borderRadius: '10px',
+                      padding: '12px 16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                        <span style={{ fontWeight: 700, color: '#60a5fa', fontSize: '0.9rem' }}>
+                          🔄 Deteksi Data Siang Susulan (Late Sync 3A &le; 16:44:59): +{formatNumber(latestLateSync3A.total_pengunjung)} Pengunjung
+                        </span>
+                        <span style={{ fontSize: '0.78rem', color: '#93c5fd', background: 'rgba(59,130,246,0.2)', padding: '2px 10px', borderRadius: '12px' }}>
+                          Otomatis masuk ke Rekap Siang 3A (Tidak mencemari Shift Malam)
+                        </span>
+                      </div>
+                      {byChEntries.length > 0 && (
+                        <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                          <strong style={{ color: '#bfdbfe' }}>Channel 3A: </strong>
+                          {byChEntries.map(([ch, val]) => `${ch.replace(/_/g, ' ')} (+${formatNumber(val.total_pengunjung)})`).join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <div className="table-wrapper">
                   <table>
@@ -1595,6 +1758,7 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                         <th style={{ textAlign: 'right', color: '#93c5fd' }}>Δ TVM</th>
                         <th style={{ textAlign: 'right', color: '#93c5fd' }}>Δ Online</th>
                         <th style={{ textAlign: 'right', color: '#93c5fd' }}>Δ MPOS</th>
+                        <th style={{ textAlign: 'right', color: '#fb923c' }}>Susulan Siang (&lt;16:45)</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1605,6 +1769,7 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                         const dTvm = b.deltaChannels3A['TVM']?.total_pengunjung || 0;
                         const dMerchant = b.deltaChannels3A['MERCHANT_PAGE']?.total_pengunjung || 0;
                         const dMpos = b.deltaChannels3A['MPOS']?.total_pengunjung || 0;
+                        const late3A = b.lateSyncSlot3A.total_pengunjung;
 
                         return (
                           <tr
@@ -1677,6 +1842,16 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                             <td style={{ textAlign: 'right', color: !b.isFirstOverall && dMpos > 0 ? '#93c5fd' : 'var(--text-muted)', fontSize: '0.84rem' }}>
                               {b.isFirstOverall ? formatNumber(b.channels3A['MPOS']?.total_pengunjung || 0) : (dMpos > 0 ? `+${formatNumber(dMpos)}` : '0')}
                             </td>
+                            <td style={{
+                              textAlign: 'right',
+                              fontWeight: late3A > 0 ? 700 : 400,
+                              color: late3A > 0 ? '#fb923c' : 'var(--text-muted)',
+                              fontSize: '0.83rem'
+                            }}>
+                              {b.shift === 'malam'
+                                ? (late3A > 0 ? `🔄 +${formatNumber(late3A)} (Siang)` : '0')
+                                : '—'}
+                            </td>
                           </tr>
                         );
                       })}
@@ -1703,10 +1878,53 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                       Riwayat & Penambahan Per 15 Menit — DASHBOARD IWM (Old Gate)
                     </h3>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      Mencakup seluruh pintu & wahana di portal IWM. Angka hijau <strong style={{ color: '#34d399' }}>+Δ</strong> menunjukkan penambahan dari 15 menit sebelumnya.
+                      Mencakup seluruh pintu & wahana di portal IWM. Saat Shift Malam, dicocokkan otomatis dengan <strong>Detail Transaksi Pos (JakCard & New JakCard, Cut-Off 16:45:00 WIB)</strong> agar transaksi siang yang telat sync tidak masuk ke hitungan malam.
                     </span>
                   </div>
                 </div>
+
+                {/* Info Rekonsiliasi Late-Sync IWM jika ada */}
+                {(() => {
+                  const latestLateSync = [...parsedBreakdowns].reverse().find(b => b.lateSyncInfo && b.lateSyncInfo.total_pengunjung > 0)?.lateSyncInfo;
+                  if (!latestLateSync) return null;
+                  const byHourEntries = Object.entries(latestLateSync.by_hour || {}).filter(([, v]) => v.total_pengunjung > 0);
+                  const byLokEntries = Object.entries(latestLateSync.by_lokasi || {}).filter(([, v]) => v.total_pengunjung > 0);
+
+                  return (
+                    <div style={{
+                      background: 'rgba(234, 88, 12, 0.1)',
+                      border: '1px solid rgba(251, 146, 60, 0.35)',
+                      borderRadius: '10px',
+                      padding: '12px 16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                        <span style={{ fontWeight: 700, color: '#fb923c', fontSize: '0.9rem' }}>
+                          🔄 Deteksi Data Siang Susulan (Late Sync IWM dari Detail Transaksi Pos): +{formatNumber(latestLateSync.total_pengunjung)} Pengunjung
+                        </span>
+                        <span style={{ fontSize: '0.78rem', color: '#fdba74', background: 'rgba(234,88,12,0.2)', padding: '2px 10px', borderRadius: '12px' }}>
+                          Tanggal Transaksi &lt; {latestLateSync.cutoff_time || '16:45:00'} tetapi Tanggal Masuk &ge; {latestLateSync.cutoff_time || '16:45:00'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+                        {byHourEntries.length > 0 && (
+                          <div>
+                            <strong style={{ color: '#fde68a' }}>Asal Jam Transaksi Siang: </strong>
+                            {byHourEntries.map(([hr, val]) => `Pukul ${hr} (+${formatNumber(val.total_pengunjung)})`).join(', ')}
+                          </div>
+                        )}
+                        {byLokEntries.length > 0 && (
+                          <div>
+                            <strong style={{ color: '#fde68a' }}>Pintu/Lokasi: </strong>
+                            {byLokEntries.map(([lok, val]) => `${lok} (+${formatNumber(val.total_pengunjung)})`).join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="table-wrapper">
                   <table>
@@ -1724,12 +1942,14 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                         <th style={{ textAlign: 'right' }}>Mobil</th>
                         <th style={{ textAlign: 'right' }}>Bus</th>
                         <th style={{ textAlign: 'right' }}>Sepeda</th>
+                        <th style={{ textAlign: 'right', color: '#fb923c' }}>Susulan Siang (&lt;16:45)</th>
                       </tr>
                     </thead>
                     <tbody>
                       {parsedBreakdowns.map((b) => {
                         const isSelected = selectedSnapshot?.jam === b.jam;
                         const dIWM = b.deltaIWM.total_pengunjung;
+                        const lateCount = b.lateSyncSlot.total_pengunjung;
 
                         return (
                           <tr
@@ -1788,6 +2008,16 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                             </td>
                             <td style={{ textAlign: 'right' }}>
                               {renderMetricCell(b.metricsIWM.sepeda, b.deltaIWM.sepeda, b.isFirstOverall)}
+                            </td>
+                            <td style={{
+                              textAlign: 'right',
+                              fontWeight: lateCount > 0 ? 700 : 400,
+                              color: lateCount > 0 ? '#fb923c' : 'var(--text-muted)',
+                              fontSize: '0.83rem'
+                            }}>
+                              {b.shift === 'malam'
+                                ? (lateCount > 0 ? `🔄 +${formatNumber(lateCount)} (Siang)` : '0')
+                                : '—'}
                             </td>
                           </tr>
                         );

@@ -1091,8 +1091,12 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
 
     print(f"\n📧 [EMAIL REPORT] Menyiapkan laporan infografis untuk slot data {slot_id} (Tampil di laporan: pukul {display_jam} WIB)...")
 
-    # 1. Ambil pengaturan foto satwa pilihan & penerima dari Firestore
+    # 1. Ambil pengaturan foto satwa pilihan, posisi kanan, & penerima dari Firestore
     photo_data_url = ""
+    photo_offset_x = 0
+    photo_offset_y = 0
+    photo_zoom = 1.0
+    photo_fit_mode = "contain_right"
     recipients = list(DEFAULT_EMAIL_RECIPIENTS)
     if db_client:
         try:
@@ -1102,10 +1106,22 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
                 src = cfg.get("selected_photo_src", "")
                 if src.startswith("data:image/"):
                     photo_data_url = src
+                elif src.startswith("http://") or src.startswith("https://"):
+                    try:
+                        req_img = urllib.request.Request(src, headers={"User-Agent": "TMR-Scraper/2.0"})
+                        with urllib.request.urlopen(req_img, timeout=10) as r_img:
+                            b64_img = base64.b64encode(r_img.read()).decode("ascii")
+                            photo_data_url = f"data:image/jpeg;base64,{b64_img}"
+                    except Exception:
+                        pass
                 elif src.startswith("/"):
                     local_p = os.path.join("public", src.lstrip("/"))
                     mime = "image/png" if local_p.endswith(".png") else "image/jpeg"
                     photo_data_url = file_to_data_url(local_p, mime)
+                photo_offset_x = float(cfg.get("photo_offset_x", 0) or 0)
+                photo_offset_y = float(cfg.get("photo_offset_y", 0) or 0)
+                photo_zoom = float(cfg.get("photo_zoom", 1.0) or 1.0)
+                photo_fit_mode = cfg.get("photo_fit_mode") or "contain_right"
                 extra_rec = cfg.get("email_recipients")
                 if isinstance(extra_rec, list):
                     for r_email in extra_rec:
@@ -1119,7 +1135,6 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
                          file_to_data_url(os.path.join("public", "harimau.jpg"), "image/jpeg")
 
     logo_dki_url = file_to_data_url(os.path.join("public", "logo-dki.png"), "image/png")
-    logo_ragunan_url = file_to_data_url(os.path.join("public", "logo-ragunan.png"), "image/png")
     weather = ambil_cuaca_ragunan()
 
     # Format baris tanggal & jam laporan
@@ -1147,8 +1162,11 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
         "weatherText": f"{weather['temp']}° C - {weather['desc']}",
         "weatherIcon": weather["icon"],
         "photoSrc": photo_data_url,
-        "logoDki": logo_dki_url,
-        "logoRagunan": logo_ragunan_url
+        "photoOffsetX": photo_offset_x,
+        "photoOffsetY": photo_offset_y,
+        "photoZoom": photo_zoom,
+        "photoFitMode": photo_fit_mode,
+        "logoDki": logo_dki_url
     }
 
     data_url_png = driver.execute_async_script("""
@@ -1180,7 +1198,7 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
             ctx.closePath();
         };
 
-        const drawPill = (cx, y, w, h, color, text, fontSize = 28) => {
+        const drawPill = (cx, y, w, h, color, text, fontSize = 26) => {
             const x = cx - w / 2;
             ctx.beginPath();
             ctx.moveTo(x + 14, y);
@@ -1215,22 +1233,54 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
             ctx.fillText(text, cx, y);
         };
 
-        Promise.all([loadImg(cfg.photoSrc), loadImg(cfg.logoDki), loadImg(cfg.logoRagunan)]).then(([bgImg, dkiImg, ragImg]) => {
-            ctx.fillStyle = '#e9e4d6';
+        Promise.all([loadImg(cfg.photoSrc), loadImg(cfg.logoDki)]).then(([bgImg, dkiImg]) => {
+            ctx.fillStyle = '#efebde';
             ctx.fillRect(0, 0, W, H);
 
+            // Gambar satwa khusus di area sebelah kanan (x: 470..1000) agar tidak terpotong
             if (bgImg) {
-                const scale = Math.max(W / bgImg.width, H / bgImg.height);
-                const dw = bgImg.width * scale;
-                const dh = bgImg.height * scale;
-                ctx.drawImage(bgImg, W - dw, (H - dh) / 2, dw, dh);
+                const rightZoneX = 470;
+                const rightZoneW = W - rightZoneX;
+                const rightZoneH = H;
+
+                ctx.save();
+                const bgScale = Math.max(rightZoneW / bgImg.width, rightZoneH / bgImg.height) * 1.15;
+                const bgW = bgImg.width * bgScale;
+                const bgH = bgImg.height * bgScale;
+                ctx.filter = 'blur(18px) brightness(0.92)';
+                ctx.drawImage(bgImg, rightZoneX + (rightZoneW - bgW) / 2, (rightZoneH - bgH) / 2, bgW, bgH);
+                ctx.restore();
+
+                ctx.save();
+                let baseScale;
+                if (cfg.photoFitMode === 'contain_right') {
+                    baseScale = Math.min(rightZoneW / bgImg.width, rightZoneH / bgImg.height);
+                    if (bgImg.width / bgImg.height > 1.25) {
+                        baseScale = Math.min((rightZoneW * 1.18) / bgImg.width, rightZoneH / bgImg.height);
+                    } else {
+                        baseScale = Math.max(baseScale, Math.min(rightZoneW / bgImg.width, rightZoneH / bgImg.height) * 1.04);
+                    }
+                } else {
+                    baseScale = Math.max(rightZoneW / bgImg.width, rightZoneH / bgImg.height);
+                }
+                const finalScale = baseScale * (cfg.photoZoom || 1.0);
+                const dw = bgImg.width * finalScale;
+                const dh = bgImg.height * finalScale;
+                const rightCenterX = rightZoneX + rightZoneW / 2 + 10;
+                let dx = rightCenterX - dw / 2 + (cfg.photoOffsetX || 0);
+                if (dx + dw < W && dw >= rightZoneW) {
+                    dx = W - dw + (cfg.photoOffsetX || 0);
+                }
+                const dy = (H - dh) / 2 + (cfg.photoOffsetY || 0);
+                ctx.drawImage(bgImg, dx, dy, dw, dh);
+                ctx.restore();
             }
 
             const grad = ctx.createLinearGradient(0, 0, W, 0);
-            grad.addColorStop(0, 'rgba(239,235,222,0.97)');
-            grad.addColorStop(0.44, 'rgba(239,235,222,0.90)');
-            grad.addColorStop(0.62, 'rgba(239,235,222,0.35)');
-            grad.addColorStop(0.78, 'rgba(239,235,222,0)');
+            grad.addColorStop(0, 'rgba(239,235,222,1)');
+            grad.addColorStop(0.45, 'rgba(239,235,222,0.98)');
+            grad.addColorStop(0.51, 'rgba(239,235,222,0.72)');
+            grad.addColorStop(0.57, 'rgba(239,235,222,0)');
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, W, H);
 
@@ -1254,70 +1304,70 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
             // Judul
             ctx.textAlign = 'left';
             ctx.textBaseline = 'alphabetic';
-            ctx.font = '900 34px Arial, sans-serif';
+            ctx.font = '900 33px Arial, sans-serif';
             ctx.lineWidth = 7;
             ctx.strokeStyle = '#ffffff';
-            ctx.strokeText('DATA PENGUNJUNG', 180, 58);
+            ctx.strokeText('DATA PENGUNJUNG', 172, 56);
             ctx.fillStyle = '#3b8728';
-            ctx.fillText('DATA PENGUNJUNG', 180, 58);
+            ctx.fillText('DATA PENGUNJUNG', 172, 56);
 
             // Badge tanggal
-            roundRect(180, 74, 445, 42, 8);
+            roundRect(172, 72, 376, 40, 8);
             ctx.fillStyle = '#f7931e';
             ctx.fill();
-            ctx.setLineDash([6, 5]);
-            ctx.lineWidth = 2.5;
+            ctx.setLineDash([6, 4]);
+            ctx.lineWidth = 2.2;
             ctx.strokeStyle = '#4a3520';
             ctx.stroke();
             ctx.setLineDash([]);
             ctx.fillStyle = '#ffffff';
-            ctx.font = '700 18px Arial, sans-serif';
+            ctx.font = '700 16.5px Arial, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(cfg.titleLine, 402, 96);
+            ctx.fillText(cfg.titleLine, 360, 93);
 
             // Dewasa & Anak
-            drawEmoji('🐅', 105, 184, 68);
-            drawLabel('Dewasa', 105, 240);
-            drawPill(105, 260, 122, 38, '#883997', fmt(cfg.dewasa), 26);
+            drawEmoji('🐅', 96, 182, 66);
+            drawLabel('Dewasa', 96, 238);
+            drawPill(96, 258, 118, 36, '#883997', fmt(cfg.dewasa), 25);
 
-            drawEmoji('🐯', 246, 184, 68);
-            drawLabel('Anak', 246, 240);
-            drawPill(246, 260, 114, 38, '#883997', fmt(cfg.anak), 26);
+            drawEmoji('🐯', 228, 182, 66);
+            drawLabel('Anak', 228, 238);
+            drawPill(228, 258, 110, 36, '#883997', fmt(cfg.anak), 25);
 
             // TOTAL
-            roundRect(362, 165, 138, 38, 2);
+            roundRect(338, 164, 130, 36, 3);
             ctx.fillStyle = '#754c24';
             ctx.fill();
             ctx.fillStyle = '#ffffff';
-            ctx.font = '900 28px Arial, sans-serif';
+            ctx.font = '900 27px Arial, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('TOTAL', 431, 185);
+            ctx.fillText('TOTAL', 403, 183);
 
-            roundRect(326, 203, 210, 62, 2);
+            roundRect(306, 200, 194, 58, 3);
             ctx.fillStyle = '#7ab81d';
             ctx.fill();
             ctx.fillStyle = '#ffffff';
-            ctx.font = '900 48px Arial, sans-serif';
-            ctx.fillText(fmt(cfg.total), 431, 236);
+            ctx.font = '900 45px Arial, sans-serif';
+            ctx.fillText(fmt(cfg.total), 403, 231);
 
             // Kendaraan
-            drawEmoji('🚲', 105, 336, 54);
-            drawLabel('Sepeda', 105, 392);
-            drawPill(105, 410, 106, 36, '#c9403e', fmt(cfg.sepeda), 25);
+            drawEmoji('🚲', 88, 334, 52);
+            drawLabel('Sepeda', 88, 388);
+            drawPill(88, 406, 98, 34, '#c9403e', fmt(cfg.sepeda), 23);
 
-            drawEmoji('🏍️', 244, 336, 54);
-            drawLabel('Motor', 244, 392);
-            drawPill(244, 410, 114, 36, '#ec654f', fmt(cfg.motor), 25);
+            drawEmoji('🏍️', 208, 334, 52);
+            drawLabel('Motor', 208, 388);
+            drawPill(208, 406, 108, 34, '#ec654f', fmt(cfg.motor), 23);
 
-            drawEmoji('🚗', 376, 336, 54);
-            drawLabel('Mobil', 376, 392);
-            drawPill(376, 410, 114, 36, '#f2b622', fmt(cfg.mobil), 25);
+            drawEmoji('🚗', 330, 334, 52);
+            drawLabel('Mobil', 330, 388);
+            drawPill(330, 406, 108, 34, '#f2b622', fmt(cfg.mobil), 23);
 
-            drawEmoji('🚌', 504, 336, 54);
-            drawLabel('Bus', 504, 392);
-            drawPill(504, 410, 106, 36, '#8cc63f', fmt(cfg.bus), 25);
+            drawEmoji('🚌', 448, 334, 52);
+            drawLabel('Bus', 448, 388);
+            drawPill(448, 406, 96, 34, '#8cc63f', fmt(cfg.bus), 23);
 
             // Garis pemisah
             ctx.save();
@@ -1325,63 +1375,91 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
             ctx.lineWidth = 2;
             ctx.strokeStyle = '#8cc63f';
             ctx.beginPath();
-            for (let x = 34; x <= 450; x += 4) {
-                const y = 468 + Math.sin((x - 34) / 8) * 3;
-                if (x === 34) ctx.moveTo(x, y);
+            for (let x = 36; x <= 465; x += 4) {
+                const y = 464 + Math.sin((x - 36) / 8) * 2.5;
+                if (x === 36) ctx.moveTo(x, y);
                 else ctx.lineTo(x, y);
             }
             ctx.stroke();
             ctx.restore();
 
             // TSA & PPS
-            roundRect(78, 484, 134, 34, 17);
+            roundRect(74, 480, 140, 34, 17);
             ctx.fillStyle = '#f5a028';
             ctx.fill();
-            drawEmoji('🐊', 98, 501, 18);
+            drawEmoji('🐊', 94, 497, 18);
             ctx.fillStyle = '#ffffff';
-            ctx.font = '800 20px Arial, sans-serif';
+            ctx.font = '800 19px Arial, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(fmt(cfg.tsa), 146, 502);
-            ctx.beginPath(); ctx.arc(194, 501, 13, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
-            ctx.fillStyle = '#4a3a22'; ctx.font = '900 10px Arial, sans-serif'; ctx.fillText('TSA', 194, 502);
+            ctx.fillText(fmt(cfg.tsa), 144, 498);
+            ctx.beginPath(); ctx.arc(196, 497, 13, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+            ctx.fillStyle = '#4a3a22'; ctx.font = '900 10px Arial, sans-serif'; ctx.fillText('TSA', 196, 498);
 
-            roundRect(272, 484, 134, 34, 17);
+            roundRect(260, 480, 140, 34, 17);
             ctx.fillStyle = '#f5a028';
             ctx.fill();
-            ctx.beginPath(); ctx.arc(290, 501, 13, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
-            ctx.fillStyle = '#4a3a22'; ctx.font = '900 10px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('PPS', 290, 502);
-            ctx.fillStyle = '#ffffff'; ctx.font = '800 20px Arial, sans-serif'; ctx.fillText(fmt(cfg.pps), 338, 502);
-            drawEmoji('🦍', 388, 501, 18);
+            ctx.beginPath(); ctx.arc(278, 497, 13, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+            ctx.fillStyle = '#4a3a22'; ctx.font = '900 10px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('PPS', 278, 498);
+            ctx.fillStyle = '#ffffff'; ctx.font = '800 19px Arial, sans-serif'; ctx.fillText(fmt(cfg.pps), 330, 498);
+            drawEmoji('🦍', 380, 497, 18);
 
-            // Cuaca
-            roundRect(94, 535, 294, 50, 10);
+            // Kotak Keterangan Cuaca (Rapi & rata tengah dinamis)
+            ctx.font = '800 15.5px Arial, sans-serif';
+            const textW = ctx.measureText(cfg.weatherText).width;
+            const wBoxW = Math.max(326, Math.min(430, Math.round(textW + 88)));
+            const wBoxH = 48;
+            const wBoxX = Math.max(38, Math.round(237 - wBoxW / 2));
+            const wBoxY = 532;
+
+            roundRect(wBoxX, wBoxY, wBoxW, wBoxH, 12);
             ctx.fillStyle = '#ffffff';
             ctx.fill();
             ctx.lineWidth = 3;
             ctx.strokeStyle = '#99c24d';
             ctx.stroke();
-            drawEmoji(cfg.weatherIcon, 132, 560, 28);
-            ctx.fillStyle = '#222222';
-            ctx.font = '800 15px Arial, sans-serif';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(cfg.weatherText, 165, 561);
 
-            // Lengkungan putih kanan bawah + Logo Ragunan
+            const iconCx = wBoxX + 32;
+            const iconCy = wBoxY + wBoxH / 2;
+            ctx.beginPath();
+            ctx.arc(iconCx, iconCy, 17, 0, Math.PI * 2);
+            ctx.fillStyle = '#f0f9ff';
+            ctx.fill();
+            drawEmoji(cfg.weatherIcon, iconCx, iconCy + 1, 21);
+
+            ctx.fillStyle = '#1f2937';
+            ctx.font = '800 15.5px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const textAreaCenterX = wBoxX + 56 + (wBoxW - 66) / 2;
+            ctx.fillText(cfg.weatherText, textAreaCenterX, iconCy + 1);
+
+            // Lengkungan putih kanan bawah + Logo Vector Ragunan
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.moveTo(815, 600);
-            ctx.quadraticCurveTo(845, 520, 1000, 490);
+            ctx.moveTo(790, 600);
+            ctx.quadraticCurveTo(835, 515, 1000, 485);
             ctx.lineTo(1000, 600);
             ctx.closePath();
             ctx.fill();
 
-            if (ragImg) {
-                const rh = 54;
-                const rw = (ragImg.width / ragImg.height) * rh;
-                ctx.drawImage(ragImg, 986 - rw, 590 - rh, rw, rh);
-            }
+            const lx = 856, ly = 568;
+            ctx.beginPath();
+            ctx.arc(lx, ly, 16, 0, Math.PI * 2);
+            ctx.fillStyle = '#8cc63f';
+            ctx.fill();
+            drawEmoji('🌿', lx, ly, 15);
+
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '700 8.5px Arial, sans-serif';
+            ctx.fillText('TAMAN MARGASATWA', 878, 555);
+            ctx.fillStyle = '#4a3520';
+            ctx.font = '900 20px Arial, sans-serif';
+            ctx.fillText('RAGUNAN', 878, 571);
+            ctx.fillStyle = '#8cc63f';
+            ctx.font = '700 7.5px Arial, sans-serif';
+            ctx.fillText('JAKARTA - INDONESIA', 878, 584);
 
             done(canvas.toDataURL('image/png'));
         });

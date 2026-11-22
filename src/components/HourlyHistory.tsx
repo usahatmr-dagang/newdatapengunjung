@@ -39,6 +39,7 @@ interface HistorySnapshot {
   late_sync_iwm?: LateSyncIWMInfo;
   tickets_3a_by_channel_visit?: any;
   iwm?: any[];
+  sunday_late_sync_check?: boolean;
 }
 
 interface SourceMetrics {
@@ -1116,11 +1117,17 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                   Detail Snapshot Pukul {selectedSnapshot.jam} WIB
                   <span style={{
                     fontSize: '0.75rem', padding: '2px 10px', borderRadius: '20px',
-                    background: selectedSnapshot.shift === 'malam' ? 'rgba(99,102,241,0.2)' : 'rgba(16,185,129,0.2)',
-                    color: selectedSnapshot.shift === 'malam' ? '#818cf8' : '#34d399',
+                    background: (selectedSnapshot.sunday_late_sync_check || (selectedSnapshot.shift === 'siang' && selectedSnapshot.jam >= '18:00'))
+                      ? 'rgba(245,158,11,0.2)'
+                      : selectedSnapshot.shift === 'malam' ? 'rgba(99,102,241,0.2)' : 'rgba(16,185,129,0.2)',
+                    color: (selectedSnapshot.sunday_late_sync_check || (selectedSnapshot.shift === 'siang' && selectedSnapshot.jam >= '18:00'))
+                      ? '#fbbf24'
+                      : selectedSnapshot.shift === 'malam' ? '#818cf8' : '#34d399',
                     fontWeight: 600
                   }}>
-                    Shift {String(selectedSnapshot.shift || (selectedSnapshot.jam >= '15:00' ? 'MALAM' : 'SIANG')).toUpperCase()}
+                    {(selectedSnapshot.sunday_late_sync_check || (selectedSnapshot.shift === 'siang' && selectedSnapshot.jam >= '18:00'))
+                      ? 'CEK SUSULAN (MINGGU)'
+                      : `Shift ${String(selectedSnapshot.shift || (selectedSnapshot.jam >= '15:00' ? 'MALAM' : 'SIANG')).toUpperCase()}`}
                   </span>
                 </h3>
                 <button
@@ -1390,14 +1397,19 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                             {h.jam} WIB
                           </td>
                           <td>
-                            <span style={{
-                              fontSize: '0.75rem', padding: '2px 8px', borderRadius: '20px',
-                              background: h.shift === 'malam' ? 'rgba(99,102,241,0.2)' : 'rgba(16,185,129,0.15)',
-                              color: h.shift === 'malam' ? '#818cf8' : '#34d399',
-                              fontWeight: 600
-                            }}>
-                              {String(h.shift || (h.jam >= '15:00' ? 'MALAM' : 'SIANG')).toUpperCase()}
-                            </span>
+                            {(() => {
+                              const isSundayCheck = Boolean(h.sunday_late_sync_check || (h.shift === 'siang' && h.jam >= '18:00'));
+                              return (
+                                <span style={{
+                                  fontSize: '0.75rem', padding: '2px 8px', borderRadius: '20px',
+                                  background: isSundayCheck ? 'rgba(245,158,11,0.2)' : (h.shift === 'malam' ? 'rgba(99,102,241,0.2)' : 'rgba(16,185,129,0.15)'),
+                                  color: isSundayCheck ? '#fbbf24' : (h.shift === 'malam' ? '#818cf8' : '#34d399'),
+                                  fontWeight: 600
+                                }}>
+                                  {isSundayCheck ? 'CEK SUSULAN' : String(h.shift || (h.jam >= '15:00' ? 'MALAM' : 'SIANG')).toUpperCase()}
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td style={{ textAlign: 'right', fontWeight: 700, color: '#10b981' }}>
                             {formatNumber(h.total_pengunjung)}
@@ -1619,14 +1631,19 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                               {b.jam} WIB
                             </td>
                             <td>
-                              <span style={{
-                                fontSize: '0.73rem', padding: '2px 8px', borderRadius: '20px',
-                                background: b.shift === 'malam' ? 'rgba(99,102,241,0.2)' : 'rgba(16,185,129,0.15)',
-                                color: b.shift === 'malam' ? '#818cf8' : '#34d399',
-                                fontWeight: 600
-                              }}>
-                                {b.shift.toUpperCase()}
-                              </span>
+                              {(() => {
+                                const isSundayCheck = Boolean(b.snapshot.sunday_late_sync_check || (b.shift === 'siang' && b.jam >= '18:00'));
+                                return (
+                                  <span style={{
+                                    fontSize: '0.73rem', padding: '2px 8px', borderRadius: '20px',
+                                    background: isSundayCheck ? 'rgba(245,158,11,0.2)' : (b.shift === 'malam' ? 'rgba(99,102,241,0.2)' : 'rgba(16,185,129,0.15)'),
+                                    color: isSundayCheck ? '#fbbf24' : (b.shift === 'malam' ? '#818cf8' : '#34d399'),
+                                    fontWeight: 600
+                                  }}>
+                                    {isSundayCheck ? 'CEK SUSULAN' : b.shift.toUpperCase()}
+                                  </span>
+                                );
+                              })()}
                             </td>
                             {/* 3A */}
                             <td style={{ textAlign: 'right', fontWeight: 700, color: '#60a5fa' }}>
@@ -1785,14 +1802,19 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                               {b.jam} WIB
                             </td>
                             <td>
-                              <span style={{
-                                fontSize: '0.73rem', padding: '2px 8px', borderRadius: '20px',
-                                background: b.shift === 'malam' ? 'rgba(99,102,241,0.2)' : 'rgba(16,185,129,0.15)',
-                                color: b.shift === 'malam' ? '#818cf8' : '#34d399',
-                                fontWeight: 600
-                              }}>
-                                {b.shift.toUpperCase()}
-                              </span>
+                              {(() => {
+                                const isSundayCheck = Boolean(b.snapshot.sunday_late_sync_check || (b.shift === 'siang' && b.jam >= '18:00'));
+                                return (
+                                  <span style={{
+                                    fontSize: '0.73rem', padding: '2px 8px', borderRadius: '20px',
+                                    background: isSundayCheck ? 'rgba(245,158,11,0.2)' : (b.shift === 'malam' ? 'rgba(99,102,241,0.2)' : 'rgba(16,185,129,0.15)'),
+                                    color: isSundayCheck ? '#fbbf24' : (b.shift === 'malam' ? '#818cf8' : '#34d399'),
+                                    fontWeight: 600
+                                  }}>
+                                    {isSundayCheck ? 'CEK SUSULAN' : b.shift.toUpperCase()}
+                                  </span>
+                                );
+                              })()}
                             </td>
                             <td style={{ textAlign: 'right', fontWeight: 700, color: '#60a5fa' }}>
                               {formatNumber(b.metrics3A.total_pengunjung)}
@@ -1965,14 +1987,19 @@ export const HourlyHistory: React.FC<HourlyHistoryProps> = ({ data }) => {
                               {b.jam} WIB
                             </td>
                             <td>
-                              <span style={{
-                                fontSize: '0.73rem', padding: '2px 8px', borderRadius: '20px',
-                                background: b.shift === 'malam' ? 'rgba(99,102,241,0.2)' : 'rgba(16,185,129,0.15)',
-                                color: b.shift === 'malam' ? '#818cf8' : '#34d399',
-                                fontWeight: 600
-                              }}>
-                                {b.shift.toUpperCase()}
-                              </span>
+                              {(() => {
+                                const isSundayCheck = Boolean(b.snapshot.sunday_late_sync_check || (b.shift === 'siang' && b.jam >= '18:00'));
+                                return (
+                                  <span style={{
+                                    fontSize: '0.73rem', padding: '2px 8px', borderRadius: '20px',
+                                    background: isSundayCheck ? 'rgba(245,158,11,0.2)' : (b.shift === 'malam' ? 'rgba(99,102,241,0.2)' : 'rgba(16,185,129,0.15)'),
+                                    color: isSundayCheck ? '#fbbf24' : (b.shift === 'malam' ? '#818cf8' : '#34d399'),
+                                    fontWeight: 600
+                                  }}>
+                                    {isSundayCheck ? 'CEK SUSULAN' : b.shift.toUpperCase()}
+                                  </span>
+                                );
+                              })()}
                             </td>
                             <td style={{ textAlign: 'right', fontWeight: 700, color: '#fbbf24' }}>
                               {formatNumber(b.metricsIWM.total_pengunjung)}

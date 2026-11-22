@@ -1620,11 +1620,24 @@ def main():
                         if s_item not in local_sent:
                             local_sent.append(s_item)
                     existing_early["email_reports_sent"] = local_sent
+                fs_siang_hist = fs_data.get("siang", {}).get("history", []) if isinstance(fs_data.get("siang"), dict) else []
+                if isinstance(fs_siang_hist, list) and fs_siang_hist:
+                    if "siang" not in existing_early or not isinstance(existing_early["siang"], dict):
+                        existing_early["siang"] = {}
+                    local_hist = existing_early["siang"].get("history", [])
+                    if not isinstance(local_hist, list):
+                        local_hist = []
+                    local_jams = {str(h.get("jam", "")) for h in local_hist if isinstance(h, dict)}
+                    for fh in fs_siang_hist:
+                        if isinstance(fh, dict) and str(fh.get("jam", "")) not in local_jams:
+                            local_hist.append(fh)
+                    existing_early["siang"]["history"] = local_hist
         except Exception:
             pass
 
     siang_hist_early = existing_early.get("siang", {}).get("history", []) if isinstance(existing_early.get("siang"), dict) else []
-    has_siang_1645 = any(isinstance(h, dict) and str(h.get("jam", "")) >= "16:45" for h in siang_hist_early)
+    siang_slots_early = {str(h.get("jam", "")) for h in siang_hist_early if isinstance(h, dict) and h.get("jam")}
+    has_siang_1645 = any(s >= "16:45" for s in siang_slots_early)
     sent_early = existing_early.get("email_reports_sent", []) if isinstance(existing_early.get("email_reports_sent"), list) else []
     has_closing_email = ("16:45" in sent_early or "17:00" in sent_early)
     gh_event = (os.environ.get("GITHUB_EVENT_NAME") or "").strip().lower()
@@ -1637,7 +1650,8 @@ def main():
     time_val = hour + (minute / 60.0)
 
     is_active = False
-    clamp_siang_to_1645 = False
+    forced_siang_slot = None
+    is_sunday_late_sync_check = False
     start_siang = 7.0 if weekday <= 4 else 6.5
     end_malam = 22.0 if weekday == 5 else 22.25
 
@@ -1647,36 +1661,73 @@ def main():
             shift = "siang"
             is_active = True
         elif time_val >= 17.0:
+            # KHUSUS HARI MINGGU (weekday == 6): Tidak ada Ragunan Malam.
+            # Setelah tutup pukul 16:45, dilakukan pengecekan data susulan 1 jam sekali mulai 18:00 s/d 23:00 WIB.
+            if weekday == 6:
+                if not has_siang_1645 or not has_closing_email:
+                    shift = "siang"
+                    is_active = True
+                    forced_siang_slot = "16:45"
+                    print("⏰ [CATCH-UP 16:45] Menjalankan penarikan data penutupan Shift Siang (pukul 16:45 WIB) & pengiriman email laporan pukul 17:00 WIB...")
+                elif 18 <= hour <= 23:
+                    target_hourly_slot = f"{hour:02d}:00"
+                    if target_hourly_slot not in siang_slots_early:
+                        shift = "siang"
+                        is_active = True
+                        forced_siang_slot = target_hourly_slot
+                        is_sunday_late_sync_check = True
+                        print(f"🔎 [MINGGU CEK SUSULAN {target_hourly_slot}] Menjalankan pengambilan data 1 jam sekali (18:00–23:00 WIB) untuk cek data susulan...")
+                    elif gh_event == "workflow_dispatch":
+                        shift = "siang"
+                        is_active = True
+                        forced_siang_slot = target_hourly_slot
+                        is_sunday_late_sync_check = True
+                        print(f"🔎 [MINGGU CEK SUSULAN MANUAL {target_hourly_slot}] Menjalankan pengecekan ulang data susulan Hari Minggu...")
+                    else:
+                        next_hr = f"{hour + 1:02d}:00 WIB" if hour < 23 else "besok pagi"
+                        print(f"🛑 [AUTO-STOP] Pengecekan data susulan Hari Minggu slot {target_hourly_slot} WIB sudah selesai. Menunggu jadwal berikutnya ({next_hr}).")
+                        sys.exit(0)
+                elif gh_event == "workflow_dispatch":
+                    shift = "siang"
+                    is_active = True
+                    forced_siang_slot = "16:45"
             # Jika pada hari Selasa-Sabtu sudah masuk jam Malam (>= 17:00) dan snapshot 16:45 sudah ada
-            if 1 <= weekday <= 5 and 17.0 <= time_val <= end_malam and has_siang_1645:
+            elif 1 <= weekday <= 5 and 17.0 <= time_val <= end_malam and has_siang_1645:
                 shift = "malam"
                 is_active = True
             # Jika snapshot penutupan Siang pukul 16:45 atau email penutupan (17:00 WIB) belum terkirim hari ini
             elif 17.0 <= time_val <= 23.0 and (not has_siang_1645 or not has_closing_email):
                 shift = "siang"
                 is_active = True
-                clamp_siang_to_1645 = True
+                forced_siang_slot = "16:45"
                 print("⏰ [CATCH-UP 16:45] Menjalankan penarikan data penutupan Shift Siang (pukul 16:45 WIB) & pengiriman email laporan pukul 17:00 WIB...")
-            elif gh_event in ("workflow_dispatch", "push"):
+            elif gh_event == "workflow_dispatch":
                 if 1 <= weekday <= 5 and 17.0 <= time_val <= end_malam:
                     shift = "malam"
                 else:
                     shift = "siang"
-                    clamp_siang_to_1645 = True
+                    forced_siang_slot = "16:45"
                 is_active = True
     else:
         is_active = True
         if shift == "siang" and time_val >= 17.0:
-            clamp_siang_to_1645 = True
+            if weekday == 6 and 18 <= hour <= 23:
+                forced_siang_slot = f"{hour:02d}:00"
+                is_sunday_late_sync_check = True
+            else:
+                forced_siang_slot = "16:45"
 
     # Jika dijalankan otomatis (tanpa argumen tambahan) dan di luar jam operasional, berhentikan program
     if not is_active and len(sys.argv) == 1:
-        print(f"🛑 [AUTO-STOP] Waktu saat ini ({current_dt.strftime('%H:%M WIB')}) berada di luar sesi operasional (Siang/Malam) dan laporan penutupan 16:45/17:00 sudah selesai. Bot beristirahat.")
+        if weekday == 6 and 17 <= hour < 18:
+            print(f"🛑 [AUTO-STOP] Khusus Hari Minggu ({current_dt.strftime('%H:%M WIB')}): penutupan 16:45 sudah selesai. Cek data susulan 1 jam sekali dimulai pukul 18:00 WIB.")
+        else:
+            print(f"🛑 [AUTO-STOP] Waktu saat ini ({current_dt.strftime('%H:%M WIB')}) berada di luar sesi operasional (Siang/Malam) dan laporan penutupan 16:45/17:00 sudah selesai. Bot beristirahat.")
         sys.exit(0)
 
     print(f"🤖 MEMULAI AUTOMATION LAYANAN TERPADU TMR (Shift: {shift.upper()}, Mode: {mode.upper()}, Tanggal: {target_date_str})")
 
-    if existing_early.get("stop_for_today") == True and has_siang_1645 and has_closing_email:
+    if existing_early.get("stop_for_today") == True and has_siang_1645 and has_closing_email and not is_sunday_late_sync_check:
         print(f"💤 [AUTO-STOP] Pengunjung tutup hari ini. Hanya menarik data pendapatan online (STSU)...")
         mode = "pendapatan_online_saja"
     
@@ -1745,9 +1796,12 @@ def main():
             stsu_channels_visit = stsu_channels_malam_real
             verified_3a_night_by_time = True
         else:
-            # Shift Siang: tarik murni rentang Siang (<= 16:44:59)
+            # Shift Siang: tarik murni rentang Siang (<= 16:44:59),
+            # khusus cek data susulan Hari Minggu (18:00-23:00, tidak ada Ragunan Malam) tarik rentang penuh ('all')
+            # agar seluruh transaksi susulan tanggal visit Hari Minggu tertangkap.
+            tr_mode_siang = 'all' if is_sunday_late_sync_check else 'siang'
             data_3a_visit, data_3a_channels_visit, stsu_channels_visit = tarik_data_3a(
-                driver, wait, str_v, query_by='visit', mode=mode, time_range_mode='siang', skip_nav=False
+                driver, wait, str_v, query_by='visit', mode=mode, time_range_mode=tr_mode_siang, skip_nav=False
             )
             
         # 2. Pull IWM Quantity
@@ -1840,8 +1894,9 @@ def main():
         verified_iwm_night = False
 
         now_ts_slot = datetime.now()
-        if shift == "siang" and clamp_siang_to_1645:
-            now_ts_slot = now_ts_slot.replace(hour=16, minute=45, second=0, microsecond=0)
+        if shift == "siang" and forced_siang_slot:
+            fh, fm = [int(x) for x in forced_siang_slot.split(":")[:2]]
+            now_ts_slot = now_ts_slot.replace(hour=fh, minute=fm, second=0, microsecond=0)
         else:
             now_ts_slot = now_ts_slot.replace(minute=(now_ts_slot.minute // 15) * 15, second=0, microsecond=0)
         current_slot_str = now_ts_slot.strftime("%H:%M")
@@ -2090,18 +2145,53 @@ def main():
             rekap_visit = hitung_rekap_siang(data_3a_channels_visit, data_iwm, str_v)
             rekap_3a_visit = hitung_rekap_siang(data_3a_channels_visit, [["Header"]], str_v)
             rekap_iwm_visit = hitung_rekap_siang({}, data_iwm, str_v)
-            if clamp_siang_to_1645:
+
+            # Proteksi monotonik per sumber (3A & IWM terpisah) agar reset/gangguan salah satu portal
+            # pada pengecekan data susulan (18:00-23:00 Minggu) tidak menurunkan data valid sebelumnya
+            old_rekap_3a = existing_shift_payload.get("rekap_3a", {})
+            old_rekap_iwm = existing_shift_payload.get("rekap_iwm", {})
+            restored_any = False
+            if old_rekap_3a and rekap_3a_visit.get("total_pengunjung", 0) < old_rekap_3a.get("total_pengunjung", 0):
+                print(f"⚠️ [MONOTONIC 3A] Data 3A turun dari {old_rekap_3a.get('total_pengunjung')} menjadi {rekap_3a_visit.get('total_pengunjung')}. Mempertahankan data 3A lama.")
+                rekap_3a_visit = old_rekap_3a.copy()
+                tickets_3a_list_visit = existing_shift_payload.get("tickets_3a_visit", tickets_3a_list_visit)
+                tickets_3a_by_channel_visit = existing_shift_payload.get("tickets_3a_by_channel_visit", tickets_3a_by_channel_visit)
+                if existing_shift_payload.get("stsu"):
+                    stsu_channels_visit = existing_shift_payload.get("stsu")
+                restored_any = True
+            if old_rekap_iwm and rekap_iwm_visit.get("total_pengunjung", 0) < old_rekap_iwm.get("total_pengunjung", 0):
+                print(f"⚠️ [MONOTONIC IWM] Data IWM turun dari {old_rekap_iwm.get('total_pengunjung')} menjadi {rekap_iwm_visit.get('total_pengunjung')}. Mempertahankan data IWM lama.")
+                rekap_iwm_visit = old_rekap_iwm.copy()
+                iwm_list = existing_shift_payload.get("iwm", iwm_list)
+                restored_any = True
+            if restored_any:
+                for k_field in ("total_pengunjung", "anak", "dewasa", "pps", "tsa", "motor", "mobil", "bus", "bus_gol_1", "bus_gol_2", "sepeda"):
+                    rekap_visit[k_field] = int(rekap_3a_visit.get(k_field, 0)) + int(rekap_iwm_visit.get(k_field, 0))
+
+            if forced_siang_slot:
                 try:
                     t_obj = datetime.strptime(str_v, "%Y-%m-%d")
                 except Exception:
                     t_obj = datetime.now()
                 h_d = {0: 'Senin', 1: 'Selasa', 2: 'Rabu', 3: 'Kamis', 4: 'Jumat', 5: 'Sabtu', 6: 'Minggu'}
                 b_d = {1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April', 5: 'Mei', 6: 'Juni', 7: 'Juli', 8: 'Agustus', 9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'}
-                upd_1645 = f"{h_d[t_obj.weekday()]}, {t_obj.strftime('%d')} {b_d[t_obj.month]} {t_obj.strftime('%Y')} pukul 16:45 WIB"
+                upd_forced = f"{h_d[t_obj.weekday()]}, {t_obj.strftime('%d')} {b_d[t_obj.month]} {t_obj.strftime('%Y')} pukul {forced_siang_slot} WIB"
                 for rk in (rekap_visit, rekap_3a_visit, rekap_iwm_visit):
                     if isinstance(rk, dict):
-                        rk["jam_str"] = "16:45:00"
-                        rk["update_str"] = upd_1645
+                        rk["jam_str"] = f"{forced_siang_slot}:00"
+                        rk["update_str"] = upd_forced
+
+            if is_sunday_late_sync_check:
+                prev_tot = existing_shift_payload.get("rekap", {}).get("total_pengunjung", 0)
+                prev_3a_tot = old_rekap_3a.get("total_pengunjung", 0)
+                prev_iwm_tot = old_rekap_iwm.get("total_pengunjung", 0)
+                d_tot = max(0, rekap_visit.get("total_pengunjung", 0) - prev_tot)
+                d_3a = max(0, rekap_3a_visit.get("total_pengunjung", 0) - prev_3a_tot)
+                d_iwm = max(0, rekap_iwm_visit.get("total_pengunjung", 0) - prev_iwm_tot)
+                if d_tot > 0:
+                    print(f"🔄 [DATA SUSULAN MINGGU {forced_siang_slot}] Terdeteksi tambahan +{d_tot} pengunjung (3A: +{d_3a}, IWM: +{d_iwm})!")
+                else:
+                    print(f"✅ [DATA SUSULAN MINGGU {forced_siang_slot}] Tidak ada penambahan data susulan (Total tetap {rekap_visit.get('total_pengunjung', 0)}).")
 
         # --- MONOTONIC FIX: Prevent data from dropping (e.g. portal resets at 18:00) ---
         old_rekap_visit = existing_shift_payload.get("rekap", {})
@@ -2120,8 +2210,9 @@ def main():
         
         if new_rekap_for_history:
             now_ts = datetime.now()
-            if shift == "siang" and clamp_siang_to_1645:
-                now_ts = now_ts.replace(hour=16, minute=45, second=0, microsecond=0)
+            if shift == "siang" and forced_siang_slot:
+                fh, fm = [int(x) for x in forced_siang_slot.split(":")[:2]]
+                now_ts = now_ts.replace(hour=fh, minute=fm, second=0, microsecond=0)
             else:
                 minute_rounded = (now_ts.minute // 15) * 15
                 now_ts = now_ts.replace(minute=minute_rounded, second=0, microsecond=0)
@@ -2148,6 +2239,8 @@ def main():
                     "tickets_3a_by_channel_visit": tickets_3a_by_channel_visit,
                     "iwm": iwm_list
                 }
+                if is_sunday_late_sync_check:
+                    snapshot["sunday_late_sync_check"] = True
                 if tickets_3a_by_channel_malam_real is not None:
                     snapshot["tickets_3a_by_channel_malam_real"] = tickets_3a_by_channel_malam_real
                 if late_sync_3a_payload is not None:
@@ -2178,6 +2271,8 @@ def main():
                             "tickets_3a_by_channel_visit": tickets_3a_by_channel_visit,
                             "iwm": iwm_list
                         }
+                        if is_sunday_late_sync_check:
+                            update_dict["sunday_late_sync_check"] = True
                         if tickets_3a_by_channel_malam_real is not None:
                             update_dict["tickets_3a_by_channel_malam_real"] = tickets_3a_by_channel_malam_real
                         if late_sync_3a_payload is not None:

@@ -80,7 +80,7 @@ const EMAIL_RECIPIENTS = ['alfaditmr@gmail.com', 'lilopambudi1300@gmail.com'];
 const SLOT_CFG: Record<Slot, { cut: string; label: string | null; title: string }> = {
   '10:00': { cut: '10:00', label: '10:00', title: 'Laporan Pukul 10:00 WIB' },
   '12:00': { cut: '12:00', label: '12:00', title: 'Laporan Pukul 12:00 WIB' },
-  penutupan: { cut: '16:30', label: '17:00', title: 'Laporan Penutupan (Data 16:30, Tampil 17:00 WIB)' },
+  penutupan: { cut: '16:45', label: '17:00', title: 'Laporan Penutupan (Data 16:45, Tampil 17:00 WIB)' },
   terkini: { cut: '23:59', label: null, title: 'Data Terkini' },
 };
 
@@ -136,9 +136,9 @@ const getMetrics = (record: DailyRecord | undefined, slot: Slot): Metrics | null
   }
 
   if (slot === 'penutupan') {
-    const candidates1630 = siangHist.filter(h => String(h.jam) <= '16:45');
-    if (candidates1630.length > 0) return fromSnapshot(candidates1630[candidates1630.length - 1]);
-    if (siangRekap) return fromSnapshot({ ...siangRekap, jam: String(siangRekap.jam_str || '16:30').slice(0, 5) });
+    const candidates1645 = siangHist.filter(h => String(h.jam) <= '16:45');
+    if (candidates1645.length > 0) return fromSnapshot(candidates1645[candidates1645.length - 1]);
+    if (siangRekap) return fromSnapshot({ ...siangRekap, jam: String(siangRekap.jam_str || '16:45').slice(0, 5) });
   }
 
   const candidates = siangHist.filter(h => String(h.jam) <= cut);
@@ -892,7 +892,7 @@ export const LaporanWA: React.FC<LaporanWAProps> = ({ data }) => {
             Tujuan: <strong style={{ color: '#fff' }}>alfaditmr@gmail.com</strong> &amp; <strong style={{ color: '#fff' }}>lilopambudi1300@gmail.com</strong>
           </div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Jadwal Kirim: <strong>Pukul 10:00 WIB</strong>, <strong>Pukul 12:00 WIB</strong>, dan <strong>Penutupan Pukul 16:30 WIB (tertulis Pukul 17:00 WIB di laporan)</strong>. Foto satwa &amp; posisi yang Anda atur di bawah otomatis dipakai oleh bot saat mengirim email.
+            Jadwal Kirim: <strong>Pukul 10:00 WIB</strong>, <strong>Pukul 12:00 WIB</strong>, dan <strong>Penutupan Data Siang Akhir Pukul 16:45 WIB (tertulis Pukul 17:00 WIB di laporan)</strong>. Foto satwa &amp; posisi yang Anda atur di bawah otomatis dipakai oleh bot saat mengirim email.
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: syncingCloud ? '#fbbf24' : '#34d399', fontWeight: 600 }}>
@@ -914,7 +914,7 @@ export const LaporanWA: React.FC<LaporanWAProps> = ({ data }) => {
         <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', flexWrap: 'wrap' }}>
           {(Object.keys(SLOT_CFG) as Slot[]).map(s => (
             <button key={s} className={`btn btn-sm ${slot === s ? 'btn-primary' : ''}`} onClick={() => setSlot(s)} style={{ fontSize: '0.82rem' }}>
-              {s === 'penutupan' ? 'Penutupan (Data 16:30 → 17:00)' : s === 'terkini' ? 'Data Terkini' : `Pukul ${s}`}
+              {s === 'penutupan' ? 'Penutupan (Data 16:45 → 17:00)' : s === 'terkini' ? 'Data Terkini' : `Pukul ${s}`}
             </button>
           ))}
         </div>

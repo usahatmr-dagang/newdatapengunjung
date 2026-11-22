@@ -949,7 +949,7 @@ def hitung_rekap_siang(data_3a_channels, data_iwm, target_date_str=None):
     hari_dict = {0: 'Senin', 1: 'Selasa', 2: 'Rabu', 3: 'Kamis', 4: 'Jumat', 5: 'Sabtu', 6: 'Minggu'}
     bulan_dict = {1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April', 5: 'Mei', 6: 'Juni', 7: 'Juli', 8: 'Agustus', 9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'}
     
-    update_str = f"{hari_dict[now.weekday()]}, {now.strftime('%d')} {bulan_dict[now.month]} {now.strftime('%Y')} pukul {now.strftime('%H:%M')} WIB"
+    update_str = f"{hari_dict[tgl_obj.weekday()]}, {tgl_obj.strftime('%d')} {bulan_dict[tgl_obj.month]} {tgl_obj.strftime('%Y')} pukul {now.strftime('%H:%M')} WIB"
     tanggal_str = f"{hari_dict[tgl_obj.weekday()]}, {bulan_dict[tgl_obj.month]} {tgl_obj.strftime('%d')}, {tgl_obj.strftime('%Y')}"
     
     return {
@@ -994,7 +994,7 @@ def hitung_rekap_malam(data_3a_channels, data_iwm, rekap_siang=None, target_date
     hari_dict = {0: 'Senin', 1: 'Selasa', 2: 'Rabu', 3: 'Kamis', 4: 'Jumat', 5: 'Sabtu', 6: 'Minggu'}
     bulan_dict = {1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April', 5: 'Mei', 6: 'Juni', 7: 'Juli', 8: 'Agustus', 9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'}
     
-    update_str = f"{hari_dict[now.weekday()]}, {now.strftime('%d')} {bulan_dict[now.month]} {now.strftime('%Y')} pukul {now.strftime('%H:%M')} WIB"
+    update_str = f"{hari_dict[tgl_obj.weekday()]}, {tgl_obj.strftime('%d')} {bulan_dict[tgl_obj.month]} {tgl_obj.strftime('%Y')} pukul {now.strftime('%H:%M')} WIB"
     tanggal_str = f"{hari_dict[tgl_obj.weekday()]}, {bulan_dict[tgl_obj.month]} {tgl_obj.strftime('%d')}, {tgl_obj.strftime('%Y')}"
     
     return {
@@ -1064,7 +1064,7 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
     ke alfaditmr@gmail.com & lilopambudi1300@gmail.com pada jadwal:
     - Pukul 10:00 WIB (tertulis pukul 10:00 WIB)
     - Pukul 12:00 WIB (tertulis pukul 12:00 WIB)
-    - Pukul 16:30 WIB (data penutupan 16:30, tertulis pukul 17:00 WIB di laporan)
+    - Pukul 16:45 WIB (data siang akhir pukul 16:45, tertulis pukul 17:00 WIB di laporan)
     """
     sent_list = existing.get("email_reports_sent", [])
     if not isinstance(sent_list, list):
@@ -1073,21 +1073,36 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
     slot_id = None
     display_jam = None
 
-    if snap_time in ("10:00", "10:15") and "10:00" not in sent_list:
+    if "10:00" <= snap_time < "12:00" and "10:00" not in sent_list:
         slot_id = "10:00"
         display_jam = "10:00"
-    elif snap_time in ("12:00", "12:15") and "12:00" not in sent_list:
+    elif "12:00" <= snap_time < "16:45" and "12:00" not in sent_list:
         slot_id = "12:00"
         display_jam = "12:00"
-    elif snap_time in ("16:30", "16:45") and "16:30" not in sent_list:
-        slot_id = "16:30"
-        display_jam = "17:00"  # Data 16:30 ditampilkan sebagai pukul 17:00 WIB sesuai permintaan
+    elif snap_time >= "16:45" and "16:45" not in sent_list and "17:00" not in sent_list:
+        slot_id = "16:45"
+        display_jam = "17:00"  # Data siang akhir 16:45 ditampilkan sebagai pukul 17:00 WIB sesuai permintaan
     elif force_send:
         slot_id = snap_time
-        display_jam = "17:00" if snap_time >= "16:30" else snap_time
+        display_jam = "17:00" if snap_time >= "16:45" else snap_time
 
     if not slot_id or not display_jam:
         return False
+
+    # Pilih snapshot data siang yang sesuai dengan slot_id (10:00, 12:00, atau 16:45)
+    metrics_source = dict(rekap_siang_data or {})
+    siang_hist = existing.get("siang", {}).get("history", []) if isinstance(existing.get("siang"), dict) else []
+    if isinstance(siang_hist, list) and len(siang_hist) > 0:
+        cut_hm = "10:15" if slot_id == "10:00" else ("12:15" if slot_id == "12:00" else "16:45")
+        candidates = [h for h in siang_hist if isinstance(h, dict) and str(h.get("jam", "")) <= cut_hm]
+        if candidates:
+            candidates.sort(key=lambda x: str(x.get("jam", "")))
+            chosen_snap = candidates[-1]
+            # Untuk 16:45, gunakan yang nilai pengunjungnya tertinggi antara rekap siang akhir dan snapshot 16:45
+            if slot_id == "16:45" and int(metrics_source.get("total_pengunjung", 0)) >= int(chosen_snap.get("total_pengunjung", 0)):
+                pass
+            else:
+                metrics_source = chosen_snap
 
     print(f"\n📧 [EMAIL REPORT] Menyiapkan laporan infografis untuk slot data {slot_id} (Tampil di laporan: pukul {display_jam} WIB)...")
 
@@ -1147,18 +1162,19 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
     title_line = f"{hari_dict[tgl_obj.weekday()]}, {tgl_obj.strftime('%d')} {bulan_dict[tgl_obj.month]} {tgl_obj.strftime('%Y')} pukul {display_jam} WIB"
 
     # 2. Render gambar PNG berukuran 1000x600 menggunakan Canvas di Headless Chrome
+    driver.set_script_timeout(25)
     driver.get("about:blank")
     render_payload = {
         "titleLine": title_line,
-        "dewasa": int(rekap_siang_data.get("dewasa", 0)),
-        "anak": int(rekap_siang_data.get("anak", 0)),
-        "total": int(rekap_siang_data.get("total_pengunjung", 0)),
-        "sepeda": int(rekap_siang_data.get("sepeda", 0)),
-        "motor": int(rekap_siang_data.get("motor", 0)),
-        "mobil": int(rekap_siang_data.get("mobil", 0)),
-        "bus": int(rekap_siang_data.get("bus", 0)),
-        "tsa": int(rekap_siang_data.get("tsa", 0)),
-        "pps": int(rekap_siang_data.get("pps", 0)),
+        "dewasa": int(metrics_source.get("dewasa", 0)),
+        "anak": int(metrics_source.get("anak", 0)),
+        "total": int(metrics_source.get("total_pengunjung", 0)),
+        "sepeda": int(metrics_source.get("sepeda", 0)),
+        "motor": int(metrics_source.get("motor", 0)),
+        "mobil": int(metrics_source.get("mobil", 0)),
+        "bus": int(metrics_source.get("bus", 0)),
+        "tsa": int(metrics_source.get("tsa", 0)),
+        "pps": int(metrics_source.get("pps", 0)),
         "weatherText": f"{weather['temp']}° C - {weather['desc']}",
         "weatherIcon": weather["icon"],
         "photoSrc": photo_data_url,
@@ -1173,307 +1189,325 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
         const cfg = arguments[0];
         const done = arguments[1];
 
-        const canvas = document.createElement('canvas');
-        const W = 1000, H = 600;
-        canvas.width = W;
-        canvas.height = H;
-        const ctx = canvas.getContext('2d');
+        try {
+            const canvas = document.createElement('canvas');
+            const W = 1000, H = 600;
+            canvas.width = W;
+            canvas.height = H;
+            const ctx = canvas.getContext('2d');
 
-        const fmt = (n) => new Intl.NumberFormat('en-US').format(n || 0);
-        const loadImg = (src) => new Promise((res) => {
-            if (!src) return res(null);
-            const i = new Image();
-            i.onload = () => res(i);
-            i.onerror = () => res(null);
-            i.src = src;
-        });
-
-        const roundRect = (x, y, w, h, r) => {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.arcTo(x + w, y, x + w, y + h, r);
-            ctx.arcTo(x + w, y + h, x, y + h, r);
-            ctx.arcTo(x, y + h, x, y, r);
-            ctx.arcTo(x, y, x + w, y, r);
-            ctx.closePath();
-        };
-
-        const drawPill = (cx, y, w, h, color, text, fontSize = 26) => {
-            const x = cx - w / 2;
-            ctx.beginPath();
-            ctx.moveTo(x + 14, y);
-            ctx.lineTo(x + w - 14, y);
-            ctx.lineTo(x + w, y + h / 2);
-            ctx.lineTo(x + w - 14, y + h);
-            ctx.lineTo(x + 14, y + h);
-            ctx.lineTo(x, y + h / 2);
-            ctx.closePath();
-            ctx.fillStyle = color;
-            ctx.fill();
-            ctx.fillStyle = '#ffffff';
-            ctx.font = `800 ${fontSize}px Arial, sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, cx, y + h / 2 + 1);
-        };
-
-        const drawEmoji = (emoji, cx, cy, size) => {
-            ctx.font = `${size}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", Arial, sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#000';
-            ctx.fillText(emoji, cx, cy);
-        };
-
-        const drawLabel = (text, cx, y) => {
-            ctx.font = '800 25px Arial, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#4a3a22';
-            ctx.fillText(text, cx, y);
-        };
-
-        Promise.all([loadImg(cfg.photoSrc), loadImg(cfg.logoDki)]).then(([bgImg, dkiImg]) => {
-            ctx.fillStyle = '#efebde';
-            ctx.fillRect(0, 0, W, H);
-
-            // Gambar satwa khusus di area sebelah kanan (x: 470..1000) agar tidak terpotong
-            if (bgImg) {
-                const rightZoneX = 470;
-                const rightZoneW = W - rightZoneX;
-                const rightZoneH = H;
-
-                ctx.save();
-                const bgScale = Math.max(rightZoneW / bgImg.width, rightZoneH / bgImg.height) * 1.15;
-                const bgW = bgImg.width * bgScale;
-                const bgH = bgImg.height * bgScale;
-                ctx.filter = 'blur(18px) brightness(0.92)';
-                ctx.drawImage(bgImg, rightZoneX + (rightZoneW - bgW) / 2, (rightZoneH - bgH) / 2, bgW, bgH);
-                ctx.restore();
-
-                ctx.save();
-                let baseScale;
-                if (cfg.photoFitMode === 'contain_right') {
-                    baseScale = Math.min(rightZoneW / bgImg.width, rightZoneH / bgImg.height);
-                    if (bgImg.width / bgImg.height > 1.25) {
-                        baseScale = Math.min((rightZoneW * 1.18) / bgImg.width, rightZoneH / bgImg.height);
-                    } else {
-                        baseScale = Math.max(baseScale, Math.min(rightZoneW / bgImg.width, rightZoneH / bgImg.height) * 1.04);
+            const fmt = (n) => new Intl.NumberFormat('en-US').format(n || 0);
+            const loadImg = (src) => new Promise((res) => {
+                if (!src) return res(null);
+                let settled = false;
+                const finish = (val) => {
+                    if (!settled) {
+                        settled = true;
+                        res(val);
                     }
-                } else {
-                    baseScale = Math.max(rightZoneW / bgImg.width, rightZoneH / bgImg.height);
+                };
+                const timer = setTimeout(() => finish(null), 5000);
+                const i = new Image();
+                i.onload = () => { clearTimeout(timer); finish(i); };
+                i.onerror = () => { clearTimeout(timer); finish(null); };
+                i.src = src;
+            });
+
+            const roundRect = (x, y, w, h, r) => {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.arcTo(x + w, y, x + w, y + h, r);
+                ctx.arcTo(x + w, y + h, x, y + h, r);
+                ctx.arcTo(x, y + h, x, y, r);
+                ctx.arcTo(x, y, x + w, y, r);
+                ctx.closePath();
+            };
+
+            const drawPill = (cx, y, w, h, color, text, fontSize = 26) => {
+                const x = cx - w / 2;
+                ctx.beginPath();
+                ctx.moveTo(x + 14, y);
+                ctx.lineTo(x + w - 14, y);
+                ctx.lineTo(x + w, y + h / 2);
+                ctx.lineTo(x + w - 14, y + h);
+                ctx.lineTo(x + 14, y + h);
+                ctx.lineTo(x, y + h / 2);
+                ctx.closePath();
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `800 ${fontSize}px Arial, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, cx, y + h / 2 + 1);
+            };
+
+            const drawEmoji = (emoji, cx, cy, size) => {
+                ctx.font = `${size}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", Arial, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#000';
+                ctx.fillText(emoji, cx, cy);
+            };
+
+            const drawLabel = (text, cx, y) => {
+                ctx.font = '800 25px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#4a3a22';
+                ctx.fillText(text, cx, y);
+            };
+
+            Promise.all([loadImg(cfg.photoSrc), loadImg(cfg.logoDki)]).then(([bgImg, dkiImg]) => {
+                try {
+                    ctx.fillStyle = '#efebde';
+                    ctx.fillRect(0, 0, W, H);
+
+                    // Gambar satwa khusus di area sebelah kanan (x: 470..1000) agar tidak terpotong
+                    if (bgImg && bgImg.width > 0 && bgImg.height > 0) {
+                        const rightZoneX = 470;
+                        const rightZoneW = W - rightZoneX;
+                        const rightZoneH = H;
+
+                        ctx.save();
+                        const bgScale = Math.max(rightZoneW / bgImg.width, rightZoneH / bgImg.height) * 1.15;
+                        const bgW = bgImg.width * bgScale;
+                        const bgH = bgImg.height * bgScale;
+                        ctx.filter = 'blur(18px) brightness(0.92)';
+                        ctx.drawImage(bgImg, rightZoneX + (rightZoneW - bgW) / 2, (rightZoneH - bgH) / 2, bgW, bgH);
+                        ctx.restore();
+
+                        ctx.save();
+                        let baseScale;
+                        if (cfg.photoFitMode === 'contain_right') {
+                            baseScale = Math.min(rightZoneW / bgImg.width, rightZoneH / bgImg.height);
+                            if (bgImg.width / bgImg.height > 1.25) {
+                                baseScale = Math.min((rightZoneW * 1.18) / bgImg.width, rightZoneH / bgImg.height);
+                            } else {
+                                baseScale = Math.max(baseScale, Math.min(rightZoneW / bgImg.width, rightZoneH / bgImg.height) * 1.04);
+                            }
+                        } else {
+                            baseScale = Math.max(rightZoneW / bgImg.width, rightZoneH / bgImg.height);
+                        }
+                        const finalScale = baseScale * (cfg.photoZoom || 1.0);
+                        const dw = bgImg.width * finalScale;
+                        const dh = bgImg.height * finalScale;
+                        const rightCenterX = rightZoneX + rightZoneW / 2 + 10;
+                        let dx = rightCenterX - dw / 2 + (cfg.photoOffsetX || 0);
+                        if (dx + dw < W && dw >= rightZoneW) {
+                            dx = W - dw + (cfg.photoOffsetX || 0);
+                        }
+                        const dy = (H - dh) / 2 + (cfg.photoOffsetY || 0);
+                        ctx.drawImage(bgImg, dx, dy, dw, dh);
+                        ctx.restore();
+                    }
+
+                    const grad = ctx.createLinearGradient(0, 0, W, 0);
+                    grad.addColorStop(0, 'rgba(239,235,222,1)');
+                    grad.addColorStop(0.45, 'rgba(239,235,222,0.98)');
+                    grad.addColorStop(0.51, 'rgba(239,235,222,0.72)');
+                    grad.addColorStop(0.57, 'rgba(239,235,222,0)');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(0, 0, W, H);
+
+                    // Panji DKI
+                    ctx.fillStyle = '#f5b400';
+                    ctx.beginPath();
+                    ctx.moveTo(42, 0); ctx.lineTo(138, 0); ctx.lineTo(138, 110); ctx.lineTo(90, 132); ctx.lineTo(42, 110);
+                    ctx.closePath(); ctx.fill();
+
+                    ctx.fillStyle = '#1e293b';
+                    ctx.beginPath();
+                    ctx.moveTo(47, 0); ctx.lineTo(133, 0); ctx.lineTo(133, 105); ctx.lineTo(90, 125); ctx.lineTo(47, 105);
+                    ctx.closePath(); ctx.fill();
+
+                    if (dkiImg && dkiImg.width > 0 && dkiImg.height > 0) {
+                        const lh = 76;
+                        const lw = (dkiImg.width / dkiImg.height) * lh;
+                        ctx.drawImage(dkiImg, 90 - lw / 2, 18, lw, lh);
+                    }
+
+                    // Judul
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'alphabetic';
+                    ctx.font = '900 33px Arial, sans-serif';
+                    ctx.lineWidth = 7;
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.strokeText('DATA PENGUNJUNG', 172, 56);
+                    ctx.fillStyle = '#3b8728';
+                    ctx.fillText('DATA PENGUNJUNG', 172, 56);
+
+                    // Badge tanggal
+                    roundRect(172, 72, 376, 40, 8);
+                    ctx.fillStyle = '#f7931e';
+                    ctx.fill();
+                    ctx.setLineDash([6, 4]);
+                    ctx.lineWidth = 2.2;
+                    ctx.strokeStyle = '#4a3520';
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '700 16.5px Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(cfg.titleLine, 360, 93);
+
+                    // Dewasa & Anak
+                    drawEmoji('🐅', 96, 182, 66);
+                    drawLabel('Dewasa', 96, 238);
+                    drawPill(96, 258, 118, 36, '#883997', fmt(cfg.dewasa), 25);
+
+                    drawEmoji('🐯', 228, 182, 66);
+                    drawLabel('Anak', 228, 238);
+                    drawPill(228, 258, 110, 36, '#883997', fmt(cfg.anak), 25);
+
+                    // TOTAL
+                    roundRect(338, 164, 130, 36, 3);
+                    ctx.fillStyle = '#754c24';
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '900 27px Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('TOTAL', 403, 183);
+
+                    roundRect(306, 200, 194, 58, 3);
+                    ctx.fillStyle = '#7ab81d';
+                    ctx.fill();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '900 45px Arial, sans-serif';
+                    ctx.fillText(fmt(cfg.total), 403, 231);
+
+                    // Kendaraan
+                    drawEmoji('🚲', 88, 334, 52);
+                    drawLabel('Sepeda', 88, 388);
+                    drawPill(88, 406, 98, 34, '#c9403e', fmt(cfg.sepeda), 23);
+
+                    drawEmoji('🏍️', 208, 334, 52);
+                    drawLabel('Motor', 208, 388);
+                    drawPill(208, 406, 108, 34, '#ec654f', fmt(cfg.motor), 23);
+
+                    drawEmoji('🚗', 330, 334, 52);
+                    drawLabel('Mobil', 330, 388);
+                    drawPill(330, 406, 108, 34, '#f2b622', fmt(cfg.mobil), 23);
+
+                    drawEmoji('🚌', 448, 334, 52);
+                    drawLabel('Bus', 448, 388);
+                    drawPill(448, 406, 96, 34, '#8cc63f', fmt(cfg.bus), 23);
+
+                    // Garis pemisah
+                    ctx.save();
+                    ctx.setLineDash([4, 4]);
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#8cc63f';
+                    ctx.beginPath();
+                    for (let x = 36; x <= 465; x += 4) {
+                        const y = 464 + Math.sin((x - 36) / 8) * 2.5;
+                        if (x === 36) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // TSA & PPS
+                    roundRect(74, 480, 140, 34, 17);
+                    ctx.fillStyle = '#f5a028';
+                    ctx.fill();
+                    drawEmoji('🐊', 94, 497, 18);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '800 19px Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(fmt(cfg.tsa), 144, 498);
+                    ctx.beginPath(); ctx.arc(196, 497, 13, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+                    ctx.fillStyle = '#4a3a22'; ctx.font = '900 10px Arial, sans-serif'; ctx.fillText('TSA', 196, 498);
+
+                    roundRect(260, 480, 140, 34, 17);
+                    ctx.fillStyle = '#f5a028';
+                    ctx.fill();
+                    ctx.beginPath(); ctx.arc(278, 497, 13, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+                    ctx.fillStyle = '#4a3a22'; ctx.font = '900 10px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('PPS', 278, 498);
+                    ctx.fillStyle = '#ffffff'; ctx.font = '800 19px Arial, sans-serif'; ctx.fillText(fmt(cfg.pps), 330, 498);
+                    drawEmoji('🦍', 380, 497, 18);
+
+                    // Kotak Keterangan Cuaca (Rapi & rata tengah dinamis)
+                    ctx.font = '800 15.5px Arial, sans-serif';
+                    const textW = ctx.measureText(cfg.weatherText).width;
+                    const wBoxW = Math.max(326, Math.min(430, Math.round(textW + 88)));
+                    const wBoxH = 48;
+                    const wBoxX = Math.max(38, Math.round(237 - wBoxW / 2));
+                    const wBoxY = 532;
+
+                    roundRect(wBoxX, wBoxY, wBoxW, wBoxH, 12);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fill();
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#99c24d';
+                    ctx.stroke();
+
+                    const iconCx = wBoxX + 32;
+                    const iconCy = wBoxY + wBoxH / 2;
+                    ctx.beginPath();
+                    ctx.arc(iconCx, iconCy, 17, 0, Math.PI * 2);
+                    ctx.fillStyle = '#f0f9ff';
+                    ctx.fill();
+                    drawEmoji(cfg.weatherIcon, iconCx, iconCy + 1, 21);
+
+                    ctx.fillStyle = '#1f2937';
+                    ctx.font = '800 15.5px Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    const textAreaCenterX = wBoxX + 56 + (wBoxW - 66) / 2;
+                    ctx.fillText(cfg.weatherText, textAreaCenterX, iconCy + 1);
+
+                    // Lengkungan putih kanan bawah + Logo Vector Ragunan
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.moveTo(790, 600);
+                    ctx.quadraticCurveTo(835, 515, 1000, 485);
+                    ctx.lineTo(1000, 600);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    const lx = 856, ly = 568;
+                    ctx.beginPath();
+                    ctx.arc(lx, ly, 16, 0, Math.PI * 2);
+                    ctx.fillStyle = '#8cc63f';
+                    ctx.fill();
+                    drawEmoji('🌿', lx, ly, 15);
+
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = '#6b7280';
+                    ctx.font = '700 8.5px Arial, sans-serif';
+                    ctx.fillText('TAMAN MARGASATWA', 878, 555);
+                    ctx.fillStyle = '#4a3520';
+                    ctx.font = '900 20px Arial, sans-serif';
+                    ctx.fillText('RAGUNAN', 878, 571);
+                    ctx.fillStyle = '#8cc63f';
+                    ctx.font = '700 7.5px Arial, sans-serif';
+                    ctx.fillText('JAKARTA - INDONESIA', 878, 584);
+
+                    done(canvas.toDataURL('image/png'));
+                } catch (innerErr) {
+                    done('ERROR:' + (innerErr && innerErr.message ? innerErr.message : String(innerErr)));
                 }
-                const finalScale = baseScale * (cfg.photoZoom || 1.0);
-                const dw = bgImg.width * finalScale;
-                const dh = bgImg.height * finalScale;
-                const rightCenterX = rightZoneX + rightZoneW / 2 + 10;
-                let dx = rightCenterX - dw / 2 + (cfg.photoOffsetX || 0);
-                if (dx + dw < W && dw >= rightZoneW) {
-                    dx = W - dw + (cfg.photoOffsetX || 0);
-                }
-                const dy = (H - dh) / 2 + (cfg.photoOffsetY || 0);
-                ctx.drawImage(bgImg, dx, dy, dw, dh);
-                ctx.restore();
-            }
-
-            const grad = ctx.createLinearGradient(0, 0, W, 0);
-            grad.addColorStop(0, 'rgba(239,235,222,1)');
-            grad.addColorStop(0.45, 'rgba(239,235,222,0.98)');
-            grad.addColorStop(0.51, 'rgba(239,235,222,0.72)');
-            grad.addColorStop(0.57, 'rgba(239,235,222,0)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, W, H);
-
-            // Panji DKI
-            ctx.fillStyle = '#f5b400';
-            ctx.beginPath();
-            ctx.moveTo(42, 0); ctx.lineTo(138, 0); ctx.lineTo(138, 110); ctx.lineTo(90, 132); ctx.lineTo(42, 110);
-            ctx.closePath(); ctx.fill();
-
-            ctx.fillStyle = '#1e293b';
-            ctx.beginPath();
-            ctx.moveTo(47, 0); ctx.lineTo(133, 0); ctx.lineTo(133, 105); ctx.lineTo(90, 125); ctx.lineTo(47, 105);
-            ctx.closePath(); ctx.fill();
-
-            if (dkiImg) {
-                const lh = 76;
-                const lw = (dkiImg.width / dkiImg.height) * lh;
-                ctx.drawImage(dkiImg, 90 - lw / 2, 18, lw, lh);
-            }
-
-            // Judul
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'alphabetic';
-            ctx.font = '900 33px Arial, sans-serif';
-            ctx.lineWidth = 7;
-            ctx.strokeStyle = '#ffffff';
-            ctx.strokeText('DATA PENGUNJUNG', 172, 56);
-            ctx.fillStyle = '#3b8728';
-            ctx.fillText('DATA PENGUNJUNG', 172, 56);
-
-            // Badge tanggal
-            roundRect(172, 72, 376, 40, 8);
-            ctx.fillStyle = '#f7931e';
-            ctx.fill();
-            ctx.setLineDash([6, 4]);
-            ctx.lineWidth = 2.2;
-            ctx.strokeStyle = '#4a3520';
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '700 16.5px Arial, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(cfg.titleLine, 360, 93);
-
-            // Dewasa & Anak
-            drawEmoji('🐅', 96, 182, 66);
-            drawLabel('Dewasa', 96, 238);
-            drawPill(96, 258, 118, 36, '#883997', fmt(cfg.dewasa), 25);
-
-            drawEmoji('🐯', 228, 182, 66);
-            drawLabel('Anak', 228, 238);
-            drawPill(228, 258, 110, 36, '#883997', fmt(cfg.anak), 25);
-
-            // TOTAL
-            roundRect(338, 164, 130, 36, 3);
-            ctx.fillStyle = '#754c24';
-            ctx.fill();
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '900 27px Arial, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('TOTAL', 403, 183);
-
-            roundRect(306, 200, 194, 58, 3);
-            ctx.fillStyle = '#7ab81d';
-            ctx.fill();
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '900 45px Arial, sans-serif';
-            ctx.fillText(fmt(cfg.total), 403, 231);
-
-            // Kendaraan
-            drawEmoji('🚲', 88, 334, 52);
-            drawLabel('Sepeda', 88, 388);
-            drawPill(88, 406, 98, 34, '#c9403e', fmt(cfg.sepeda), 23);
-
-            drawEmoji('🏍️', 208, 334, 52);
-            drawLabel('Motor', 208, 388);
-            drawPill(208, 406, 108, 34, '#ec654f', fmt(cfg.motor), 23);
-
-            drawEmoji('🚗', 330, 334, 52);
-            drawLabel('Mobil', 330, 388);
-            drawPill(330, 406, 108, 34, '#f2b622', fmt(cfg.mobil), 23);
-
-            drawEmoji('🚌', 448, 334, 52);
-            drawLabel('Bus', 448, 388);
-            drawPill(448, 406, 96, 34, '#8cc63f', fmt(cfg.bus), 23);
-
-            // Garis pemisah
-            ctx.save();
-            ctx.setLineDash([4, 4]);
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#8cc63f';
-            ctx.beginPath();
-            for (let x = 36; x <= 465; x += 4) {
-                const y = 464 + Math.sin((x - 36) / 8) * 2.5;
-                if (x === 36) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            }
-            ctx.stroke();
-            ctx.restore();
-
-            // TSA & PPS
-            roundRect(74, 480, 140, 34, 17);
-            ctx.fillStyle = '#f5a028';
-            ctx.fill();
-            drawEmoji('🐊', 94, 497, 18);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '800 19px Arial, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(fmt(cfg.tsa), 144, 498);
-            ctx.beginPath(); ctx.arc(196, 497, 13, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
-            ctx.fillStyle = '#4a3a22'; ctx.font = '900 10px Arial, sans-serif'; ctx.fillText('TSA', 196, 498);
-
-            roundRect(260, 480, 140, 34, 17);
-            ctx.fillStyle = '#f5a028';
-            ctx.fill();
-            ctx.beginPath(); ctx.arc(278, 497, 13, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
-            ctx.fillStyle = '#4a3a22'; ctx.font = '900 10px Arial, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('PPS', 278, 498);
-            ctx.fillStyle = '#ffffff'; ctx.font = '800 19px Arial, sans-serif'; ctx.fillText(fmt(cfg.pps), 330, 498);
-            drawEmoji('🦍', 380, 497, 18);
-
-            // Kotak Keterangan Cuaca (Rapi & rata tengah dinamis)
-            ctx.font = '800 15.5px Arial, sans-serif';
-            const textW = ctx.measureText(cfg.weatherText).width;
-            const wBoxW = Math.max(326, Math.min(430, Math.round(textW + 88)));
-            const wBoxH = 48;
-            const wBoxX = Math.max(38, Math.round(237 - wBoxW / 2));
-            const wBoxY = 532;
-
-            roundRect(wBoxX, wBoxY, wBoxW, wBoxH, 12);
-            ctx.fillStyle = '#ffffff';
-            ctx.fill();
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#99c24d';
-            ctx.stroke();
-
-            const iconCx = wBoxX + 32;
-            const iconCy = wBoxY + wBoxH / 2;
-            ctx.beginPath();
-            ctx.arc(iconCx, iconCy, 17, 0, Math.PI * 2);
-            ctx.fillStyle = '#f0f9ff';
-            ctx.fill();
-            drawEmoji(cfg.weatherIcon, iconCx, iconCy + 1, 21);
-
-            ctx.fillStyle = '#1f2937';
-            ctx.font = '800 15.5px Arial, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            const textAreaCenterX = wBoxX + 56 + (wBoxW - 66) / 2;
-            ctx.fillText(cfg.weatherText, textAreaCenterX, iconCy + 1);
-
-            // Lengkungan putih kanan bawah + Logo Vector Ragunan
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.moveTo(790, 600);
-            ctx.quadraticCurveTo(835, 515, 1000, 485);
-            ctx.lineTo(1000, 600);
-            ctx.closePath();
-            ctx.fill();
-
-            const lx = 856, ly = 568;
-            ctx.beginPath();
-            ctx.arc(lx, ly, 16, 0, Math.PI * 2);
-            ctx.fillStyle = '#8cc63f';
-            ctx.fill();
-            drawEmoji('🌿', lx, ly, 15);
-
-            ctx.textAlign = 'left';
-            ctx.fillStyle = '#6b7280';
-            ctx.font = '700 8.5px Arial, sans-serif';
-            ctx.fillText('TAMAN MARGASATWA', 878, 555);
-            ctx.fillStyle = '#4a3520';
-            ctx.font = '900 20px Arial, sans-serif';
-            ctx.fillText('RAGUNAN', 878, 571);
-            ctx.fillStyle = '#8cc63f';
-            ctx.font = '700 7.5px Arial, sans-serif';
-            ctx.fillText('JAKARTA - INDONESIA', 878, 584);
-
-            done(canvas.toDataURL('image/png'));
-        });
+            }).catch((pErr) => {
+                done('ERROR:' + String(pErr));
+            });
+        } catch (outerErr) {
+            done('ERROR:' + String(outerErr));
+        }
     """, render_payload)
 
     if not data_url_png or not str(data_url_png).startswith("data:image/png;base64,"):
-        print("⚠️ [EMAIL REPORT] Gagal merender gambar canvas.")
+        print(f"⚠️ [EMAIL REPORT] Gagal merender gambar canvas: {data_url_png}")
         return False
 
     png_bytes = base64.b64decode(str(data_url_png).split(",", 1)[1])
 
     # 3. Kirim Email melalui Gmail SMTP
     gmail_user = (os.environ.get("GMAIL_USER") or "usahatmr@gmail.com").strip()
-    gmail_app_password = (os.environ.get("GMAIL_APP_PASSWORD") or "").strip()
+    gmail_app_password = re.sub(r"\s+", "", os.environ.get("GMAIL_APP_PASSWORD") or "")
 
     if not gmail_app_password:
         print("⚠️ [EMAIL REPORT] Secret GMAIL_APP_PASSWORD belum diatur di GitHub Secrets. Gambar berhasil dibuat namun pengiriman email dilewati.")
@@ -1540,57 +1574,28 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
 # 4. PROGRAM UTAMA (MAIN)
 # ==========================================
 def main():
-    # 1. PARSE ARGUMENTS
+    # 1. PARSE ARGUMENTS & WAKTU OPERASIONAL
     shift = "siang"
     target_date_str = None
     mode = "pengunjung"
-    
-    # Check automatically based on local time if no shift specified
-    current_dt = datetime.now()
-    
-    # Tentukan Shift dan apakah sedang dalam jam aktif berdasarkan hari dan jam
-    # Hari: 0=Senin, 1=Selasa, ..., 4=Jumat, 5=Sabtu, 6=Minggu
-    weekday = current_dt.weekday()
-    hour = current_dt.hour
-    minute = current_dt.minute
-    time_val = hour + (minute / 60.0)
-    
-    is_active = False
-    shift = "siang"
-    
-    start_siang = 7.0 if weekday <= 4 else 6.5
-    
-    if start_siang <= time_val <= 16.5: # Siang Senin - Minggu sampai 16:30
-        shift = "siang"
-        is_active = True
-    elif time_val > 16.5:
-        shift = "malam"
-        # Malam aktif jika Selasa(1) sampai Sabtu(5) dan dari pukul 16:45
-        if 1 <= weekday <= 5:
-            end_malam = 22.0 if weekday == 5 else 22.25
-            if 16.75 <= time_val <= end_malam:
-                is_active = True
-            
-    # Jika dijalankan otomatis (tanpa argumen tambahan) dan di luar jam operasional, berhentikan program
-    if not is_active and len(sys.argv) == 1:
-        print(f"🛑 [AUTO-STOP] Waktu saat ini ({current_dt.strftime('%H:%M WIB')}) berada di luar sesi operasional (Siang/Malam). Bot beristirahat.")
-        sys.exit(0)
-        
+    explicit_shift = False
+
     for arg in sys.argv[1:]:
         val = arg.lower().strip()
         if val in ["siang", "malam"]:
             shift = val
+            explicit_shift = True
         elif val in ["pengunjung", "pendapatan", "full"]:
             mode = val
         elif re.match(r"^\d{4}-\d{2}-\d{2}$", val):
             target_date_str = val
-            
+
+    current_dt = datetime.now()
     if not target_date_str:
-        target_date_str = datetime.now().strftime("%Y-%m-%d")
-        
-    print(f"🤖 MEMULAI AUTOMATION LAYANAN TERPADU TMR (Shift: {shift.upper()}, Mode: {mode.upper()}, Tanggal: {target_date_str})")
-    
-    # CEK EARLY EXIT (Apakah hari ini sudah dihentikan permanen?)
+        target_date_str = current_dt.strftime("%Y-%m-%d")
+
+    # Baca data hari ini terlebih dahulu untuk mengecek apakah snapshot penutupan Siang (16:45)
+    # dan email laporan penutupan (16:45 -> tampil 17:00 WIB) sudah diproses
     os.makedirs("data", exist_ok=True)
     file_path = f"data/{target_date_str}.json"
     existing_early = {}
@@ -1599,9 +1604,79 @@ def main():
             with open(file_path, "r", encoding="utf-8") as f:
                 existing_early = json.load(f)
         except Exception:
+            existing_early = {}
+
+    if db:
+        try:
+            fs_doc = db.collection("daily_records").document(target_date_str).get()
+            if fs_doc.exists:
+                fs_data = fs_doc.to_dict() or {}
+                fs_sent = fs_data.get("email_reports_sent")
+                if isinstance(fs_sent, list):
+                    local_sent = existing_early.get("email_reports_sent")
+                    if not isinstance(local_sent, list):
+                        local_sent = []
+                    for s_item in fs_sent:
+                        if s_item not in local_sent:
+                            local_sent.append(s_item)
+                    existing_early["email_reports_sent"] = local_sent
+        except Exception:
             pass
-            
-    if existing_early.get("stop_for_today") == True:
+
+    siang_hist_early = existing_early.get("siang", {}).get("history", []) if isinstance(existing_early.get("siang"), dict) else []
+    has_siang_1645 = any(isinstance(h, dict) and str(h.get("jam", "")) >= "16:45" for h in siang_hist_early)
+    sent_early = existing_early.get("email_reports_sent", []) if isinstance(existing_early.get("email_reports_sent"), list) else []
+    has_closing_email = ("16:45" in sent_early or "17:00" in sent_early)
+    gh_event = (os.environ.get("GITHUB_EVENT_NAME") or "").strip().lower()
+
+    # Tentukan Shift dan apakah sedang dalam jam aktif berdasarkan hari dan jam
+    # Hari: 0=Senin, 1=Selasa, ..., 4=Jumat, 5=Sabtu, 6=Minggu
+    weekday = current_dt.weekday()
+    hour = current_dt.hour
+    minute = current_dt.minute
+    time_val = hour + (minute / 60.0)
+
+    is_active = False
+    clamp_siang_to_1645 = False
+    start_siang = 7.0 if weekday <= 4 else 6.5
+    end_malam = 22.0 if weekday == 5 else 22.25
+
+    if not explicit_shift:
+        if start_siang <= time_val < 17.0:
+            # Shift Siang aktif Senin - Minggu sampai akhir slot pukul 16:45 (16:45:00 s/d 16:59:59 WIB)
+            shift = "siang"
+            is_active = True
+        elif time_val >= 17.0:
+            # Jika pada hari Selasa-Sabtu sudah masuk jam Malam (>= 17:00) dan snapshot 16:45 sudah ada
+            if 1 <= weekday <= 5 and 17.0 <= time_val <= end_malam and has_siang_1645:
+                shift = "malam"
+                is_active = True
+            # Jika snapshot penutupan Siang pukul 16:45 atau email penutupan (17:00 WIB) belum terkirim hari ini
+            elif 17.0 <= time_val <= 23.0 and (not has_siang_1645 or not has_closing_email):
+                shift = "siang"
+                is_active = True
+                clamp_siang_to_1645 = True
+                print("⏰ [CATCH-UP 16:45] Menjalankan penarikan data penutupan Shift Siang (pukul 16:45 WIB) & pengiriman email laporan pukul 17:00 WIB...")
+            elif gh_event in ("workflow_dispatch", "push"):
+                if 1 <= weekday <= 5 and 17.0 <= time_val <= end_malam:
+                    shift = "malam"
+                else:
+                    shift = "siang"
+                    clamp_siang_to_1645 = True
+                is_active = True
+    else:
+        is_active = True
+        if shift == "siang" and time_val >= 17.0:
+            clamp_siang_to_1645 = True
+
+    # Jika dijalankan otomatis (tanpa argumen tambahan) dan di luar jam operasional, berhentikan program
+    if not is_active and len(sys.argv) == 1:
+        print(f"🛑 [AUTO-STOP] Waktu saat ini ({current_dt.strftime('%H:%M WIB')}) berada di luar sesi operasional (Siang/Malam) dan laporan penutupan 16:45/17:00 sudah selesai. Bot beristirahat.")
+        sys.exit(0)
+
+    print(f"🤖 MEMULAI AUTOMATION LAYANAN TERPADU TMR (Shift: {shift.upper()}, Mode: {mode.upper()}, Tanggal: {target_date_str})")
+
+    if existing_early.get("stop_for_today") == True and has_siang_1645 and has_closing_email:
         print(f"💤 [AUTO-STOP] Pengunjung tutup hari ini. Hanya menarik data pendapatan online (STSU)...")
         mode = "pendapatan_online_saja"
     
@@ -1615,9 +1690,7 @@ def main():
     options.add_argument("--disable-dev-shm-usage")
     options.set_capability("acceptInsecureCerts", True)
     
-    # Blokir gambar agar IWM memuat lebih cepat di server 1GB RAM
-    prefs = {"profile.managed_default_content_settings.images": 2}
-    options.add_experimental_option("prefs", prefs)
+    # Catatan: Jangan memblokir gambar (images: 2) agar Headless Chrome Canvas dapat merender foto satwa & logo laporan email tanpa timeout
     
     # Anti-detection options from malam script
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -1767,8 +1840,14 @@ def main():
         verified_iwm_night = False
 
         now_ts_slot = datetime.now()
-        now_ts_slot = now_ts_slot.replace(minute=(now_ts_slot.minute // 15) * 15, second=0, microsecond=0)
+        if shift == "siang" and clamp_siang_to_1645:
+            now_ts_slot = now_ts_slot.replace(hour=16, minute=45, second=0, microsecond=0)
+        else:
+            now_ts_slot = now_ts_slot.replace(minute=(now_ts_slot.minute // 15) * 15, second=0, microsecond=0)
         current_slot_str = now_ts_slot.strftime("%H:%M")
+
+        if existing_early.get("email_reports_sent") and not existing.get("email_reports_sent"):
+            existing["email_reports_sent"] = existing_early["email_reports_sent"]
 
         if shift == "malam":
             # ------------------------------------------------------------------
@@ -2011,6 +2090,18 @@ def main():
             rekap_visit = hitung_rekap_siang(data_3a_channels_visit, data_iwm, str_v)
             rekap_3a_visit = hitung_rekap_siang(data_3a_channels_visit, [["Header"]], str_v)
             rekap_iwm_visit = hitung_rekap_siang({}, data_iwm, str_v)
+            if clamp_siang_to_1645:
+                try:
+                    t_obj = datetime.strptime(str_v, "%Y-%m-%d")
+                except Exception:
+                    t_obj = datetime.now()
+                h_d = {0: 'Senin', 1: 'Selasa', 2: 'Rabu', 3: 'Kamis', 4: 'Jumat', 5: 'Sabtu', 6: 'Minggu'}
+                b_d = {1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April', 5: 'Mei', 6: 'Juni', 7: 'Juli', 8: 'Agustus', 9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'}
+                upd_1645 = f"{h_d[t_obj.weekday()]}, {t_obj.strftime('%d')} {b_d[t_obj.month]} {t_obj.strftime('%Y')} pukul 16:45 WIB"
+                for rk in (rekap_visit, rekap_3a_visit, rekap_iwm_visit):
+                    if isinstance(rk, dict):
+                        rk["jam_str"] = "16:45:00"
+                        rk["update_str"] = upd_1645
 
         # --- MONOTONIC FIX: Prevent data from dropping (e.g. portal resets at 18:00) ---
         old_rekap_visit = existing_shift_payload.get("rekap", {})
@@ -2029,8 +2120,11 @@ def main():
         
         if new_rekap_for_history:
             now_ts = datetime.now()
-            minute_rounded = (now_ts.minute // 15) * 15
-            now_ts = now_ts.replace(minute=minute_rounded, second=0, microsecond=0)
+            if shift == "siang" and clamp_siang_to_1645:
+                now_ts = now_ts.replace(hour=16, minute=45, second=0, microsecond=0)
+            else:
+                minute_rounded = (now_ts.minute // 15) * 15
+                now_ts = now_ts.replace(minute=minute_rounded, second=0, microsecond=0)
             snap_time = now_ts.strftime("%H:%M")
             snap_ts = now_ts.isoformat()
             

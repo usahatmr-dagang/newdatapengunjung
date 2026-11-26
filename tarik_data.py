@@ -1150,6 +1150,11 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
                          file_to_data_url(os.path.join("public", "harimau.jpg"), "image/jpeg")
 
     logo_dki_url = file_to_data_url(os.path.join("public", "logo-dki.png"), "image/png")
+    logo_tmr_url = (
+        file_to_data_url(os.path.join("public", "logo-tmr.png"), "image/png")
+        or file_to_data_url("logo-tmr.png", "image/png")
+        or file_to_data_url(os.path.join("public", "logotmr.png"), "image/png")
+    )
     weather = ambil_cuaca_ragunan()
 
     # Format baris tanggal & jam laporan
@@ -1182,7 +1187,8 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
         "photoOffsetY": photo_offset_y,
         "photoZoom": photo_zoom,
         "photoFitMode": photo_fit_mode,
-        "logoDki": logo_dki_url
+        "logoDki": logo_dki_url,
+        "logoTmr": logo_tmr_url
     }
 
     data_url_png = driver.execute_async_script("""
@@ -1258,7 +1264,7 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
                 ctx.fillText(text, cx, y);
             };
 
-            Promise.all([loadImg(cfg.photoSrc), loadImg(cfg.logoDki)]).then(([bgImg, dkiImg]) => {
+            Promise.all([loadImg(cfg.photoSrc), loadImg(cfg.logoDki), loadImg(cfg.logoTmr)]).then(([bgImg, dkiImg, tmrImg]) => {
                 try {
                     ctx.fillStyle = '#efebde';
                     ctx.fillRect(0, 0, W, H);
@@ -1460,32 +1466,38 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
                     const textAreaCenterX = wBoxX + 56 + (wBoxW - 66) / 2;
                     ctx.fillText(cfg.weatherText, textAreaCenterX, iconCy + 1);
 
-                    // Lengkungan putih kanan bawah + Logo Vector Ragunan
+                    // Lengkungan putih kanan bawah + Logo Resmi Ragunan (logo-tmr.png)
                     ctx.fillStyle = '#ffffff';
                     ctx.beginPath();
-                    ctx.moveTo(790, 600);
-                    ctx.quadraticCurveTo(835, 515, 1000, 485);
+                    ctx.moveTo(765, 600);
+                    ctx.quadraticCurveTo(812, 482, 1000, 452);
                     ctx.lineTo(1000, 600);
                     ctx.closePath();
                     ctx.fill();
 
-                    const lx = 856, ly = 568;
-                    ctx.beginPath();
-                    ctx.arc(lx, ly, 16, 0, Math.PI * 2);
-                    ctx.fillStyle = '#8cc63f';
-                    ctx.fill();
-                    drawEmoji('🌿', lx, ly, 15);
+                    if (tmrImg && tmrImg.width > 0 && tmrImg.height > 0) {
+                        const lw = 166;
+                        const lh = (tmrImg.height / tmrImg.width) * lw;
+                        ctx.drawImage(tmrImg, 826, 594 - lh, lw, lh);
+                    } else {
+                        const lx = 856, ly = 568;
+                        ctx.beginPath();
+                        ctx.arc(lx, ly, 16, 0, Math.PI * 2);
+                        ctx.fillStyle = '#8cc63f';
+                        ctx.fill();
+                        drawEmoji('🌿', lx, ly, 15);
 
-                    ctx.textAlign = 'left';
-                    ctx.fillStyle = '#6b7280';
-                    ctx.font = '700 8.5px Arial, sans-serif';
-                    ctx.fillText('TAMAN MARGASATWA', 878, 555);
-                    ctx.fillStyle = '#4a3520';
-                    ctx.font = '900 20px Arial, sans-serif';
-                    ctx.fillText('RAGUNAN', 878, 571);
-                    ctx.fillStyle = '#8cc63f';
-                    ctx.font = '700 7.5px Arial, sans-serif';
-                    ctx.fillText('JAKARTA - INDONESIA', 878, 584);
+                        ctx.textAlign = 'left';
+                        ctx.fillStyle = '#6b7280';
+                        ctx.font = '700 8.5px Arial, sans-serif';
+                        ctx.fillText('TAMAN MARGASATWA', 878, 555);
+                        ctx.fillStyle = '#4a3520';
+                        ctx.font = '900 20px Arial, sans-serif';
+                        ctx.fillText('RAGUNAN', 878, 571);
+                        ctx.fillStyle = '#8cc63f';
+                        ctx.font = '700 7.5px Arial, sans-serif';
+                        ctx.fillText('JAKARTA - INDONESIA', 878, 584);
+                    }
 
                     done(canvas.toDataURL('image/png'));
                 } catch (innerErr) {

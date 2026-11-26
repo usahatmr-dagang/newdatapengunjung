@@ -717,39 +717,46 @@ export const LaporanWA: React.FC<LaporanWAProps> = ({ data }) => {
       const textAreaCenterX = wBoxX + 56 + (wBoxW - 66) / 2;
       ctx.fillText(weatherStr, textAreaCenterX, iconCy + 1);
 
-      // 13. Lengkungan putih kanan bawah + Logo Vector Taman Margasatwa Ragunan yang bersih
+      // 13. Lengkungan putih kanan bawah + Logo Resmi Taman Margasatwa Ragunan (logo-tmr.png)
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.moveTo(790, 600);
-      ctx.quadraticCurveTo(835, 515, 1000, 485);
+      ctx.moveTo(765, 600);
+      ctx.quadraticCurveTo(812, 482, 1000, 452);
       ctx.lineTo(1000, 600);
       ctx.closePath();
       ctx.fill();
 
-      // Ikon daun/tunas hijau khas logo Ragunan
-      const lx = 856;
-      const ly = 568;
-      ctx.beginPath();
-      ctx.arc(lx, ly, 16, 0, Math.PI * 2);
-      ctx.fillStyle = '#8cc63f';
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '900 16px Outfit, Arial, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🌿', lx, ly);
+      try {
+        const logoTmr = await loadImage('/logo-tmr.png');
+        if (cancelled) return;
+        const lw = 166;
+        const lh = (logoTmr.height / logoTmr.width) * lw;
+        ctx.drawImage(logoTmr, 826, 594 - lh, lw, lh);
+      } catch {
+        // Fallback jika gagal memuat gambar
+        const lx = 856;
+        const ly = 568;
+        ctx.beginPath();
+        ctx.arc(lx, ly, 16, 0, Math.PI * 2);
+        ctx.fillStyle = '#8cc63f';
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '900 16px Outfit, Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🌿', lx, ly);
 
-      // Teks Logo RAGUNAN
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#6b7280';
-      ctx.font = '700 8.5px Outfit, Arial, sans-serif';
-      ctx.fillText('TAMAN MARGASATWA', 878, 555);
-      ctx.fillStyle = '#4a3520';
-      ctx.font = '900 20px Outfit, Arial, sans-serif';
-      ctx.fillText('RAGUNAN', 878, 571);
-      ctx.fillStyle = '#8cc63f';
-      ctx.font = '700 7.5px Outfit, Arial, sans-serif';
-      ctx.fillText('JAKARTA - INDONESIA', 878, 584);
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '700 8.5px Outfit, Arial, sans-serif';
+        ctx.fillText('TAMAN MARGASATWA', 878, 555);
+        ctx.fillStyle = '#4a3520';
+        ctx.font = '900 20px Outfit, Arial, sans-serif';
+        ctx.fillText('RAGUNAN', 878, 571);
+        ctx.fillStyle = '#8cc63f';
+        ctx.font = '700 7.5px Outfit, Arial, sans-serif';
+        ctx.fillText('JAKARTA - INDONESIA', 878, 584);
+      }
     };
 
     render();

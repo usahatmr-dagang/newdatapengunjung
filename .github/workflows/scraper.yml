@@ -3,7 +3,12 @@ name: TMR Scraper Bot
 on:
   schedule:
     - cron: '*/15 * * * *' # Run every 15 minutes
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch: # Allow manual trigger or external cron
+    inputs:
+      force_run:
+        description: 'Paksa jalankan di luar jam operasional (true/false)'
+        required: false
+        default: 'false'
   push:
     branches:
       - main
@@ -45,6 +50,7 @@ jobs:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
+          FORCE_RUN: ${{ inputs.force_run || 'false' }}
         run: |
           python3 tarik_data.py
           

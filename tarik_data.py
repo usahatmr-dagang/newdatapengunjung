@@ -1573,6 +1573,37 @@ def render_dan_kirim_email_laporan(driver, db_client, target_date_str, snap_time
 # ==========================================
 # 4. PROGRAM UTAMA (MAIN)
 # ==========================================
+def sinkronkan_riwayat_malam_ke_firestore(db_client, current_dt, days_back=7):
+    """
+    Memastikan jika file lokal data/YYYY-MM-DD.json pada 7 hari terakhir memiliki data 'malam'
+    namun dokumen Firestore daily_records/YYYY-MM-DD kehilangan 'malam', maka otomatis dipulihkan ke Firestore.
+    """
+    if not db_client:
+        return
+    for d_off in range(1, days_back + 1):
+        d_str = (current_dt - timedelta(days=d_off)).strftime("%Y-%m-%d")
+        p_json = f"data/{d_str}.json"
+        if not os.path.exists(p_json):
+            continue
+        try:
+            with open(p_json, "r", encoding="utf-8") as f_hist:
+                loc_doc = json.load(f_hist)
+            loc_malam = loc_doc.get("malam")
+            if not isinstance(loc_malam, dict):
+                continue
+            loc_malam_tot = int(loc_malam.get("rekap", {}).get("total_pengunjung", 0))
+            fs_snap = db_client.collection("daily_records").document(d_str).get()
+            fs_doc = fs_snap.to_dict() if fs_snap.exists else {}
+            fs_malam = fs_doc.get("malam") if isinstance(fs_doc, dict) else None
+            fs_malam_tot = int(fs_malam.get("rekap", {}).get("total_pengunjung", 0)) if isinstance(fs_malam, dict) else -1
+            if not isinstance(fs_malam, dict) or fs_malam_tot < loc_malam_tot:
+                print(f"♻️ [RESTORE FIREBASE] Memulihkan data Shift Malam tanggal {d_str} (Malam={loc_malam_tot}) ke Cloud Firestore...")
+                db_client.collection("daily_records").document(d_str).set(loc_doc)
+                print(f"✅ [RESTORE FIREBASE] Data tanggal {d_str} berhasil dipulihkan di Cloud Firestore!")
+        except Exception as e_sync:
+            print(f"⚠️ [RESTORE FIREBASE] Gagal memeriksa/memulihkan {d_str}: {e_sync}")
+
+
 def main():
     # 1. PARSE ARGUMENTS & WAKTU OPERASIONAL
     shift = "siang"
@@ -1640,7 +1671,10 @@ def main():
     has_siang_1645 = any(s >= "16:45" for s in siang_slots_early)
     sent_early = existing_early.get("email_reports_sent", []) if isinstance(existing_early.get("email_reports_sent"), list) else []
     has_closing_email = ("16:45" in sent_early or "17:00" in sent_early)
-    gh_event = (os.environ.get("GITHUB_EVENT_NAME") or "").strip().lower()
+    force_run_manual = (os.environ.get("FORCE_RUN") or "").strip().lower() == "true"
+
+    # Sinkronkan/pulihkan data malam 7 hari terakhir ke Firestore jika sempat terhapus sebelumnya
+    sinkronkan_riwayat_malam_ke_firestore(db, current_dt, days_back=7)
 
     # Tentukan Shift dan apakah sedang dalam jam aktif berdasarkan hari dan jam
     # Hari: 0=Senin, 1=Selasa, ..., 4=Jumat, 5=Sabtu, 6=Minggu
@@ -1671,23 +1705,17 @@ def main():
                     print("⏰ [CATCH-UP 16:45] Menjalankan penarikan data penutupan Shift Siang (pukul 16:45 WIB) & pengiriman email laporan pukul 17:00 WIB...")
                 elif 18 <= hour <= 23:
                     target_hourly_slot = f"{hour:02d}:00"
-                    if target_hourly_slot not in siang_slots_early:
+                    if target_hourly_slot not in siang_slots_early or force_run_manual:
                         shift = "siang"
                         is_active = True
                         forced_siang_slot = target_hourly_slot
                         is_sunday_late_sync_check = True
                         print(f"🔎 [MINGGU CEK SUSULAN {target_hourly_slot}] Menjalankan pengambilan data 1 jam sekali (18:00–23:00 WIB) untuk cek data susulan...")
-                    elif gh_event == "workflow_dispatch":
-                        shift = "siang"
-                        is_active = True
-                        forced_siang_slot = target_hourly_slot
-                        is_sunday_late_sync_check = True
-                        print(f"🔎 [MINGGU CEK SUSULAN MANUAL {target_hourly_slot}] Menjalankan pengecekan ulang data susulan Hari Minggu...")
                     else:
                         next_hr = f"{hour + 1:02d}:00 WIB" if hour < 23 else "besok pagi"
                         print(f"🛑 [AUTO-STOP] Pengecekan data susulan Hari Minggu slot {target_hourly_slot} WIB sudah selesai. Menunggu jadwal berikutnya ({next_hr}).")
                         sys.exit(0)
-                elif gh_event == "workflow_dispatch":
+                elif force_run_manual:
                     shift = "siang"
                     is_active = True
                     forced_siang_slot = "16:45"
@@ -1701,8 +1729,10 @@ def main():
                 is_active = True
                 forced_siang_slot = "16:45"
                 print("⏰ [CATCH-UP 16:45] Menjalankan penarikan data penutupan Shift Siang (pukul 16:45 WIB) & pengiriman email laporan pukul 17:00 WIB...")
-            elif gh_event == "workflow_dispatch":
+            elif force_run_manual:
                 if 1 <= weekday <= 5 and 17.0 <= time_val <= end_malam:
+                    shift = "malam"
+                elif 1 <= weekday <= 5 and time_val > end_malam:
                     shift = "malam"
                 else:
                     shift = "siang"
@@ -2311,8 +2341,7 @@ def main():
             existing["malam"] = payload
         else:
             existing["siang"] = payload
-            if "malam" in existing:
-                del existing["malam"]
+            # JANGAN PERNAH menghapus existing["malam"] apabila data malam sudah ada pada tanggal tersebut!
                 
         print(f"✅ [LOKAL] Rekap Shift {shift.upper()} berhasil diproses. Pengunjung: {payload['rekap'].get('total_pengunjung', 0)}")
 

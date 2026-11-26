@@ -233,6 +233,9 @@ export const DashboardPengunjung: React.FC<DashboardPengunjungProps> = ({ data }
     if (shiftTab === 'siang') return r.siang?.tickets_3a_by_channel_visit?.[channel] || [];
     if (shiftTab === 'kumulatif') return r.malam?.tickets_3a_by_channel_visit?.[channel] || r.siang?.tickets_3a_by_channel_visit?.[channel] || [];
     
+    if ((r.malam as any)?.tickets_3a_by_channel_malam_real?.[channel]) {
+      return (r.malam as any).tickets_3a_by_channel_malam_real[channel];
+    }
     const siangT = r.siang?.tickets_3a_by_channel_visit?.[channel] || [];
     const malamT = r.malam?.tickets_3a_by_channel_visit?.[channel] || [];
     if (siangT.length === 0) return malamT;
@@ -289,6 +292,9 @@ export const DashboardPengunjung: React.FC<DashboardPengunjungProps> = ({ data }
     if (shiftTab === 'siang') return r.siang?.iwm || [];
     if (shiftTab === 'kumulatif') return r.malam?.iwm || r.siang?.iwm || [];
     
+    if (Array.isArray((r.malam as any)?.iwm_malam_real)) {
+      return (r.malam as any).iwm_malam_real;
+    }
     const siangIwm = r.siang?.iwm || [];
     const malamIwm = r.malam?.iwm || [];
     if (siangIwm.length === 0) return malamIwm;
